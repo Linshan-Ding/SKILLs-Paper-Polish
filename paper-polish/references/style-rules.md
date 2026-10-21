@@ -59,6 +59,33 @@
   (Table 4)"，数字用宏或原表）。
 - **时态惯例**：方法与模型描述用现在时；实验执行与观察用过去时；结论性陈述用现在时——按目标 venue
   相邻论文校准并全文统一。
+- **词汇纪律：领域相邻论文用什么词就用什么词**（30）。机器写作偏爱书面化的生僻词，SCI 论文用的是
+  领域内的平实词。替换表（左 → 右；`stylecheck.py` 逐词报出，目标刊物语料里出现过两次以上的词放行）：
+  elucidate → explain；delineate → describe；underpin → support；salient → main；myriad / plethora → many；
+  intricate → complex；nuanced / holistic / multifaceted → 删掉或写出具体差异；synergistic → combined；
+  harness / leverage / utilize → use；bolster → support；foster → encourage；garner → gain；pertinent →
+  relevant；endeavor → effort；ameliorate → improve；expedite → speed up；necessitate → require；
+  encompass → include；albeit → although；whilst → while；hitherto / heretofore → so far；vis-à-vis →
+  compared with；in lieu of → instead of；paramount → most important；quintessential → typical；
+  meticulously → carefully；pivotal / cornerstone → key / basis；landscape / realm → field；testament →
+  evidence；underscore / showcase / unveil → show；unravel → explain；embark → begin；pave the way → enable；
+  shed light on → explain；cutting-edge → recent；groundbreaking / transformative / tapestry / usher /
+  intriguing / elegant / noteworthy / profound / sheer → 删；commence → begin；ascertain → determine；
+  exemplify → show；posit → propose；purport → claim；substantiate → support；corroborate → confirm；
+  amalgamate → combine；juxtapose → compare；hinges on → depends on；boils down to → reduces to；akin to →
+  similar to；wherein → where；whereby → by which；thereof / therein / hereinafter → 改写；aforementioned →
+  these；burgeoning → growing；ubiquitous → common；seminal → early；immense / vast → large。判据不是
+  "词难不难"，而是目标刊物的论文用不用：拿不准就查语料，语料用的词即使在表里也保留。
+- **符号与连字符纪律**（31）：
+  - 正文散文与表头**不用箭头和运算符代替词语**：`A → B`、`$\to$`、`↑`/`↓`、`3×`、`+2.1%`、`≈`、`/` 表示
+    "或"，都改成词（leads to、higher is better、three times faster、an increase of 2.1 points、about）。
+    表格里"越低越好"写进表注，不在表头挂箭头；增减量给自己一列并带单位，不用 `(+)`/`(−)` 标记。
+    豁免：均值±标准差的 `±`、数学环境内的全部运算符。
+  - 连字符只用于领域惯用的复合词与消歧，**不叠两个以上**（feasibility-mask-guided、graph-attention-based-
+    decoder 改写成短语或已定义的术语）；前缀词按领域拼法（nonlinear、subproblem、preprocessing、
+    multiobjective 等不加连字符；目标刊物语料里出现过的连字符拼法照用）；连字符复合词密度每千词 ≤25。
+  - **CamelCase 自造名只许一个**（方法总名，如 FeasiSched），其余机制一律小写普通名词；
+    `stylecheck.py --method-name` 声明那一个。
 
 ## 2. 深层纪律：读者模型与具体性（质量的主体）
 
@@ -73,6 +100,35 @@
 - **事实清单先行**（写法本身）：每节动笔前先列纯事实条目——数字、公式号、引用、表图号、结论——再据此
   成文；**每句话都能回指某条事实，回指不到的句子即填充**。润色已有文本时，事实清单从文本自身反推。
 - **反向大纲**（27）：每段首句连读必须自己讲得通论证；讲不通的地方是段序或主题句的问题，不是措辞问题。
+
+## 2.5 证明与推导的排版（32）
+
+机器写作把证明写成一段散文，把等式链塞在句子里。数学领域的惯例是**分行连续推导**：
+
+- 定理类环境之后用 `proof` 环境；推导用 `align` / `align*`，**每行一步**，步与步之间的依据写在行末
+  `&& \text{(by Lemma 2)}`、`\text{(by the triangle inequality)}`，或引用式号；只给后文要引用的行编号
+  （`align*` + `\tag` 或 `\notag`）；以 `\end{proof}` 收尾，不写"which completes the proof"。
+- 正文里的推导同理：一个行内公式只放**一个关系式**（`$a = b$`），`$a = b = c = d$` 一律改成 `align`；
+  一个证明超过约 120 词却没有任何 display 数学，就是段落式证明，重排。
+- 文字只做三件事：说明要证什么、交代每步用了什么、指出结论；不复述公式已经写明的内容。
+
+段落式 → 分行式（内容不变）：
+
+```latex
+% 段落式（机器写作）
+We have $\nabla J = \mathbb{E}[\nabla \log \pi\, A] = \mathbb{E}[g]$ by the log-derivative trick, and since the
+mask keeps the distribution valid on the feasible set the estimator is unbiased, which completes the proof.
+
+% 分行式
+\begin{proof}
+By the log-derivative trick,
+\begin{align*}
+\nabla J &= \mathbb{E}[\nabla \log \pi(a \mid s)\, A(s,a)]      && \text{(policy gradient theorem)} \\
+         &= \mathbb{E}[g]                                        && \text{(definition of $g$ in (7))}
+\end{align*}
+and $\pi$ remains a distribution on the feasible set under the mask, so $g$ is unbiased.
+\end{proof}
+```
 
 ## 3. 反防御性写作（与 AI 痕迹并列的第二类文体病）
 
@@ -89,6 +145,19 @@
 hedge 检测词表：may / might / could potentially / to some extent / relatively / arguably / 可能 / 或许 /
 在一定程度上——每节 >2 即回改。界限：统计不确定性与明确适用条件是**合法限定**，本条款禁的是模糊、
 堆叠、无判定条件的对冲。
+
+## 3.5 脚手架（33）
+
+机器写作用结构标签代替结构本身。以下都是脚手架，叙述顺序对了它们就多余：
+
+- **枚举标签**：段内 "(i) … (ii) … (iii)"、"First, … Second, … Finally" 每节至多 1 组；贡献列表之外
+  的 itemize / enumerate 不进正文节。
+- **总结段与路线图段**："In summary / To summarize / Taken together / 综上 / 总之" 开头的段落只许在结论节；
+  "The remainder of this section is organized as follows / 本节其余部分安排如下" 只许在引言（且仅当
+  venue 惯例需要）。
+- **句首提示词**："Note that / Importantly / Interestingly / Crucially / In particular / In other words /
+  To this end" 并入句首连接词预算（15），每节 1–2 处；删掉后语义不变的一律删。
+- **括号插入**：散文括号每百词 ≤1.5 个（引用与年份不计）；"i.e. / e.g. / etc." 每节 ≤4，能点名就点名。
 
 ## 4. 机检、校准与豁免
 
@@ -108,7 +177,10 @@ hedge 检测词表：may / might / could potentially / to some extent / relative
 - **cover letter**：首末段礼节句豁免标点与加粗条款；期刊名用斜体宏（不计入 `\emph` 预算）；其余与正文
   同标准——句长有长有短、无 novel/significantly、无句中冒号与破折号。
 - **中文文本**：标点与词表自动切换——正文不用"——"与句中"："，连接词与对冲按中文词表，不造
-  "××感知/××驱动/××增强"式新词；段首引导词用 `\paragraph{}` 而非 `\textbf{状态。}`。
+  "××感知/××驱动/××增强"式新词；段首引导词用 `\paragraph{}` 而非 `\textbf{状态。}`。空话与生僻词
+  （赋能、抓手、底层逻辑、闭环、颗粒度、擘画、彰显、凸显、阐释、诠释、赋予、不可或缺、举足轻重、行之有效、
+  深度融合、全方位、多维度、层层递进、应运而生）改成具体动作或删；"（一）（二）"枚举每节至多 1 组，"综上"
+  段只在结论；证明同样分行推导。
 
 ## 6. 诚实边界
 

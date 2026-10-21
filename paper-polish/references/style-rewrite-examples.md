@@ -166,11 +166,80 @@ efficient 这类效果词，正文里当普通名词小写使用。审稿人看�
 要领：段尾的 "This design ensures…" 是模板句，删掉后段落只会更紧；句长变化让读者知道哪句是
 重点。机检第 23、25 项分别量这两件事。
 
+## 对照九：生僻词 → 领域常用词
+
+**改前**
+
+> We elucidate how the salient components underpin the policy and harness a myriad of signals, which is pivotal
+> for the intricate coupling between machines, albeit at the expense of a plethora of hyperparameters.
+
+**改后**
+
+> We explain how the two main components support the policy and use many signals. The coupling between machines
+> is complex, and the method needs eight hyperparameters (Table 2).
+
+要点：每个生僻词都换成领域论文里的平实词；"a plethora of hyperparameters"这种空指的量换成数字与出处。
+
+## 对照十：符号与连字符 → 词语与领域拼法
+
+**改前**
+
+> The reward $\to$ advantage mapping gives a $3\times$ speedup and +2.1\% accuracy; the non-linear
+> feasibility-mask-guided decoder is pre-trained. Gap (\%) $\downarrow$ appears in the table header.
+
+**改后**
+
+> Mapping rewards to advantages makes training three times faster and raises accuracy by 2.1 points. The nonlinear
+> decoder, which reads the feasibility mask, is pretrained. The table caption says that lower gap is better.
+
+要点：箭头、乘号、加号在正文里全部还原成词；表头不挂箭头，方向写进表注；双连字符复合修饰改成从句；
+前缀词按领域拼法。
+
+## 对照十一：段落式证明 → 分行推导
+
+**改前**
+
+> By the log-derivative trick we have $\nabla J = \mathbb{E}[\nabla \log \pi\, A] = \mathbb{E}[g]$, and
+> because the mask keeps the distribution valid on the feasible set, the baseline does not change the expectation
+> and the estimator is unbiased, which completes the proof.
+
+**改后**
+
+```latex
+\begin{proof}
+By the log-derivative trick,
+\begin{align*}
+\nabla J &= \mathbb{E}[\nabla \log \pi(a \mid s)\, A(s,a)]   && \text{(policy gradient theorem)} \\
+         &= \mathbb{E}[g]                                     && \text{(definition of $g$ in (7))}
+\end{align*}
+Under the mask, $\pi$ is still a distribution on the feasible set, so the baseline leaves the expectation
+unchanged and $g$ is unbiased.
+\end{proof}
+```
+
+要点：内容一字未改，等式链拆成每行一步并标依据；"which completes the proof"由 `\end{proof}` 代替。
+
+## 对照十二：枚举与总结脚手架 → 叙述顺序
+
+**改前**
+
+> The remainder of this section is organized as follows. First, we describe the encoder; second, the decoder;
+> finally, training. Specifically, (i) the encoder reads the graph, (ii) the decoder masks infeasible actions,
+> and (iii) the critic scores states. In summary, the three parts form a holistic pipeline.
+
+**改后**
+
+> The encoder reads the disjunctive graph and produces one embedding per operation. The decoder masks the
+> operations that violate precedence or machine availability before the softmax. The critic scores the
+> resulting partial schedule from the graph embedding.
+
+要点：路线图段、First/Second/Finally、(i)(ii)(iii)、In summary 全部删掉，三句话按数据流顺序排列即可。
+
 ## 使用方式
 
 - 起草：每节先落事实清单（`paper/facts/<section>.md`），再读本文件 30 秒，按"改写后"的密度与
   句法写，每句回指清单里的一条事实。
-- 机检：写完一节跑 `stylecheck.py`（项 14–27）；阈值可用 `style_baseline.py` 从目标刊物已发表论文
+- 机检：写完一节跑 `stylecheck.py`（项 14–27、30–33）；阈值可用 `style_baseline.py` 从目标刊物已发表论文
   校准。
 - 中文写作同样适用：连接词（此外/而且/值得注意的是）、对冲（可能/或许/在一定程度上）、标点
   （——/句中：）、造词（××感知/××驱动）的对应规则见 `style-rules.md` 的中文条款。
