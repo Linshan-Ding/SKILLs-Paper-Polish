@@ -119,7 +119,7 @@ python stylecheck.py sections/*.tex --baseline style_baseline.json
 
 ## 与家族技能的关系
 
-本技能是 `SKILLs-Generated`（`opt-paper-*`）与 `SKILLs-ML-Paper`（`ml-paper-*`）两组科研流水线的**文体
+本技能是 `SKILLs-OP-Paper`（`opt-paper-*`）与 `SKILLs-ML-Paper`（`ml-paper-*`）两组科研流水线的**文体
 层**，三组装在同一个 skills 目录时自动衔接：
 
 - **manuscript 技能（写稿）**：起草时引用本技能的规则写第一遍，每写完一节跑 `stylecheck.py`；三轮修订

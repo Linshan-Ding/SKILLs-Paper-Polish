@@ -55,7 +55,7 @@ python paper-polish/references/stylecheck.py --help
 
 ## 与两组科研流水线的关系
 
-本仓库是 [`SKILLs-Generated`](https://github.com/Linshan-Ding/SKILLs-Generated)（组合优化方向 `opt-paper-*`）
+本仓库是 [`SKILLs-OP-Paper`](https://github.com/Linshan-Ding/SKILLs-OP-Paper)（组合优化方向 `opt-paper-*`）
 与 [`SKILLs-ML-Paper`](https://github.com/Linshan-Ding/SKILLs-ML-Paper)（机器学习方向 `ml-paper-*`）共用的
 **文体层**：规则、正例库、文体检查器、语料校准脚本只维护在这里，两组的写稿、rebuttal、投稿包技能用
 `../paper-polish/references/...` 引用。三组装在同一个 skills 目录下即可衔接；两组的 `check.py` 直接导入
