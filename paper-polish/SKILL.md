@@ -79,13 +79,13 @@ description: >-
 | 论文正文、摘要、方案 | 无 | 全部条款 |
 | rebuttal 回复信 | 礼节句式、编号冒号、加粗定位（体裁结构） | 命名与缩写纪律、禁用词、对冲、节奏 |
 | cover letter | 首末段礼节句的标点与加粗；期刊名斜体；Harvard 多引文列表的分号（加 `% style-exempt`） | 其余与正文同标准 |
-| 中文文本 | 无 | 标点与词表自动切换为中文：不用"——"与句中"："，不造"××感知/××驱动"式新词，"可能/或许"不堆叠 |
+| 中文文本 | 无 | 标点与词表自动切换为中文：不用"——"与句中"："，引号与汉字旁的逗号、分号、冒号用全角，不造"××感知/××驱动"式新词，"可能/或许"不堆叠 |
 
 ## 机检：`stylecheck.py`（实现与阈值见 `references/stylecheck.md`）
 
 ```
 python stylecheck.py sections/*.tex                 # LaTeX 分节文件
-python stylecheck.py draft.md                       # Markdown / 纯文本（**加粗** 按句中强调计）
+python stylecheck.py draft.md                       # Markdown / 纯文本（标题按节处理，表格、引用块与代码不计入正文）
 python stylecheck.py paper/zh-draft.tex --zh        # 中文（CJK 占比超过三成时自动识别）
 python stylecheck.py sections/*.tex --baseline style_baseline.json
 ```
@@ -93,11 +93,12 @@ python stylecheck.py sections/*.tex --baseline style_baseline.json
 18 项：14 散文分号 / 15 句首连接词与提示词 / 16 禁用词 / 17 对冲预算与堆叠 / 18 命名与缩写预算 / 19 句中
 冒号 / 20 破折号 / 21 句中强调与 `\paragraph` 预算 / 22 摘要单段 / 23 句长节奏与三连排比 / 24 强化词、
 泛动词、抽象名词密度 / 25 段落具体性与段尾小结 / 26 簇引用 / 27 反向大纲 / 30 生僻词 / 31 符号与连字符
-（正文与表头的箭头与运算符、连字符链与前缀连字符、CamelCase 自造名）/ 32 证明与推导排版 / 33 脚手架
-（枚举标签、总结与路线图段、括号密度、正文列表）。`--method-name` 声明唯一允许的 CamelCase 方法名；
-`--baseline` 让目标刊物语料用过的词与连字符拼法放行。合法例外在该行加 `% style-exempt`（数学与伪代码
-里的分号冒号、引用他人原文、术语首次定义的强调）。项号与家族仓库的 `check.py` 连续（那边 1–13 是一致性
-与投稿限制，28–29 是投稿包与匿名稿，所以文体项从 30 续编），`check.py` 直接导入本脚本。
+（正文与表头的箭头与运算符、连字符链与前缀连字符、CamelCase 自造名、中文正文的直引号与半角标点）/ 32 证明与
+推导排版 / 33 脚手架（枚举标签、总结与路线图段、括号密度、正文列表）。`--method-name` 声明唯一允许的 CamelCase
+方法名；`--baseline` 让目标刊物语料用过的词与连字符拼法放行。合法例外在该行加 `% style-exempt`，Markdown 里写
+`<!-- style-exempt -->`（数学与伪代码里的分号冒号、引用他人原文、术语首次定义的强调）。Markdown 的标题按节处理，
+所以项 22、25、33 对 `.md` 同样生效；表格、`>` 引用块、代码与 HTML 注释不计入正文。项号与家族仓库的 `check.py`
+连续（那边 1–13 是一致性与投稿限制，28–29 是投稿包与匿名稿，所以文体项从 30 续编），`check.py` 直接导入本脚本。
 
 ## 交付格式（细则与示例见 `references/polish-protocol.md`）
 
@@ -111,7 +112,7 @@ python stylecheck.py sections/*.tex --baseline style_baseline.json
 
 - 四条不变量逐条核对：数字、引用、claim 强度与原文一致；没有新增句子；每条改动有规则编号；diff 可读。
 - `stylecheck.py` 复跑零 FAIL；豁免行都带 `% style-exempt` 且理由成立。
-- 体裁对了：回复信与信函没有被按正文标准误改；中文文本走了中文词表。
+- 体裁对了：回复信与信函没有被按正文标准误改（Markdown 回复信里 `>` 引用的审稿意见不计入机检）；中文文本走了中文词表。
 - 作者口吻保留：没有把作者的用词习惯替换成本技能的习惯；时态全文统一。
 - 深度模式：反向大纲连读能讲通；删减量在 10–15%；待补事实清单逐条写明需要什么。
 - 诚实边界已说明：文体规则显著降低但不能消除 AI 痕迹，终稿建议作者人工通读；AI 辅助披露按目标
