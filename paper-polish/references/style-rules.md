@@ -161,7 +161,7 @@ hedge 检测词表：may / might / could potentially / to some extent / relative
 
 ## 4. 机检、校准与豁免
 
-- **机检**：`stylecheck.py` 项 14–27（实现与阈值表见 `stylecheck.md`）。无脚本时的 grep 粗查：
+- **机检**：`stylecheck.py` 项 14–27、30–33（实现与阈值表见 `stylecheck.md`）。无脚本时的 grep 粗查：
   `grep -c ";" sections/*.tex`、`grep -cE -- "---|: [a-z]" sections/*.tex`、`grep -c "textbf" sections/*.tex`、
   `grep -cin "moreover\|furthermore\|delve\|leverage" sections/*.tex`——粗查噪声大，准数以脚本为准。
 - **语料校准**：阈值用 `style_baseline.py` 从目标刊物 **2–3 篇已发表论文**统计（`style_baseline.json`

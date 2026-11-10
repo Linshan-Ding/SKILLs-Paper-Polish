@@ -27,8 +27,8 @@ description: >-
 1. **选模式**（用户没说就按下表的触发词判断；拿不准先做体检，报告里给出建议模式）。
 2. **校准阈值**：用户能给目标刊物 2–3 篇已发表论文时，先跑 `style_baseline.py` 生成
    `style_baseline.json`；有作者自己的旧稿时同法提取作者基线——稿件向作者靠，不向通用学术腔靠。
-3. **执行**：先跑 `stylecheck.py` 拿到基线报告，再按模式改；改完复跑，直到零 FAIL（深度模式另要求
-   零 note 中的"paragraph with nothing concrete"）。
+3. **执行**：先跑 `stylecheck.py` 拿到基线报告，再按模式改；改完复跑，直到零 FAIL。机检的
+   "paragraph with nothing concrete"只查方法、实验与问题节，深度模式把其余各节的段落也逐段过一遍具体性。
 4. **交付**：改后文本 + 改动清单（每条标规则编号）+ 机检前后对比 + 待补事实清单 + 未改之处与理由。
    格式见 `references/polish-protocol.md`。
 
@@ -49,7 +49,7 @@ description: >-
    材料已有这个数字时才做；没有数字就改成"优于"并记入待补事实，不得自己填数。收窄 claim 属于作者
    决策，润色只标出过度声称处，不替作者收窄。
 2. **不新增内容**。不补背景、不加过渡段、不加小结句。
-3. **每处改动可指到规则编号**（`references/style-rules.md` 的条款号或 `stylecheck.py` 的项号 14–27）。
+3. **每处改动可指到规则编号**（`references/style-rules.md` 的条款号或 `stylecheck.py` 的项号 14–27、30–33）。
    说不出依据的改动不做。
 4. **交付可核对**：diff（或逐段对照）、改动清单、机检前后 FAIL/note 计数。作者能在五分钟内接受或回退
    任何一处改动。
@@ -119,7 +119,7 @@ python stylecheck.py sections/*.tex --baseline style_baseline.json
 
 ## 与家族技能的关系
 
-本技能是 `SKILLs-Generated`（`opt-paper-*`）与 `SKILLs-ML-Paper`（`ml-paper-*`）两组科研流水线的**文体
+本技能是 `SKILLs-OP-Paper`（`opt-paper-*`）与 `SKILLs-ML-Paper`（`ml-paper-*`）两组科研流水线的**文体
 层**，三组装在同一个 skills 目录时自动衔接：
 
 - **manuscript 技能（写稿）**：起草时引用本技能的规则写第一遍，每写完一节跑 `stylecheck.py`；三轮修订
