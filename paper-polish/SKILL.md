@@ -27,8 +27,8 @@ description: >-
 1. **选模式**（用户没说就按下表的触发词判断；拿不准先做体检，报告里给出建议模式）。
 2. **校准阈值**：用户能给目标刊物 2–3 篇已发表论文时，先跑 `style_baseline.py` 生成
    `style_baseline.json`；有作者自己的旧稿时同法提取作者基线——稿件向作者靠，不向通用学术腔靠。
-3. **执行**：先跑 `stylecheck.py` 拿到基线报告，再按模式改；改完复跑，直到零 FAIL（深度模式另要求
-   零 note 中的"paragraph with nothing concrete"）。
+3. **执行**：先跑 `stylecheck.py` 拿到基线报告，再按模式改；改完复跑，直到零 FAIL。机检的
+   "paragraph with nothing concrete"只查方法、实验与问题节，深度模式把其余各节的段落也逐段过一遍具体性。
 4. **交付**：改后文本 + 改动清单（每条标规则编号）+ 机检前后对比 + 待补事实清单 + 未改之处与理由。
    格式见 `references/polish-protocol.md`。
 
@@ -49,7 +49,7 @@ description: >-
    材料已有这个数字时才做；没有数字就改成"优于"并记入待补事实，不得自己填数。收窄 claim 属于作者
    决策，润色只标出过度声称处，不替作者收窄。
 2. **不新增内容**。不补背景、不加过渡段、不加小结句。
-3. **每处改动可指到规则编号**（`references/style-rules.md` 的条款号或 `stylecheck.py` 的项号 14–27）。
+3. **每处改动可指到规则编号**（`references/style-rules.md` 的条款号或 `stylecheck.py` 的项号 14–27、30–33）。
    说不出依据的改动不做。
 4. **交付可核对**：diff（或逐段对照）、改动清单、机检前后 FAIL/note 计数。作者能在五分钟内接受或回退
    任何一处改动。
@@ -79,13 +79,13 @@ description: >-
 | 论文正文、摘要、方案 | 无 | 全部条款 |
 | rebuttal 回复信 | 礼节句式、编号冒号、加粗定位（体裁结构） | 命名与缩写纪律、禁用词、对冲、节奏 |
 | cover letter | 首末段礼节句的标点与加粗；期刊名斜体；Harvard 多引文列表的分号（加 `% style-exempt`） | 其余与正文同标准 |
-| 中文文本 | 无 | 标点与词表自动切换为中文：不用"——"与句中"："，不造"××感知/××驱动"式新词，"可能/或许"不堆叠 |
+| 中文文本 | 无 | 标点与词表自动切换为中文：不用"——"与句中"："，引号与汉字旁的逗号、分号、冒号用全角，不造"××感知/××驱动"式新词，"可能/或许"不堆叠 |
 
 ## 机检：`stylecheck.py`（实现与阈值见 `references/stylecheck.md`）
 
 ```
 python stylecheck.py sections/*.tex                 # LaTeX 分节文件
-python stylecheck.py draft.md                       # Markdown / 纯文本（**加粗** 按句中强调计）
+python stylecheck.py draft.md                       # Markdown / 纯文本（标题按节处理，表格、引用块与代码不计入正文）
 python stylecheck.py paper/zh-draft.tex --zh        # 中文（CJK 占比超过三成时自动识别）
 python stylecheck.py sections/*.tex --baseline style_baseline.json
 ```
@@ -93,11 +93,12 @@ python stylecheck.py sections/*.tex --baseline style_baseline.json
 18 项：14 散文分号 / 15 句首连接词与提示词 / 16 禁用词 / 17 对冲预算与堆叠 / 18 命名与缩写预算 / 19 句中
 冒号 / 20 破折号 / 21 句中强调与 `\paragraph` 预算 / 22 摘要单段 / 23 句长节奏与三连排比 / 24 强化词、
 泛动词、抽象名词密度 / 25 段落具体性与段尾小结 / 26 簇引用 / 27 反向大纲 / 30 生僻词 / 31 符号与连字符
-（正文与表头的箭头与运算符、连字符链与前缀连字符、CamelCase 自造名）/ 32 证明与推导排版 / 33 脚手架
-（枚举标签、总结与路线图段、括号密度、正文列表）。`--method-name` 声明唯一允许的 CamelCase 方法名；
-`--baseline` 让目标刊物语料用过的词与连字符拼法放行。合法例外在该行加 `% style-exempt`（数学与伪代码
-里的分号冒号、引用他人原文、术语首次定义的强调）。项号与家族仓库的 `check.py` 连续（那边 1–13 是一致性
-与投稿限制，28–29 是投稿包与匿名稿，所以文体项从 30 续编），`check.py` 直接导入本脚本。
+（正文与表头的箭头与运算符、连字符链与前缀连字符、CamelCase 自造名、中文正文的直引号与半角标点）/ 32 证明与
+推导排版 / 33 脚手架（枚举标签、总结与路线图段、括号密度、正文列表）。`--method-name` 声明唯一允许的 CamelCase
+方法名；`--baseline` 让目标刊物语料用过的词与连字符拼法放行。合法例外在该行加 `% style-exempt`，Markdown 里写
+`<!-- style-exempt -->`（数学与伪代码里的分号冒号、引用他人原文、术语首次定义的强调）。Markdown 的标题按节处理，
+所以项 22、25、33 对 `.md` 同样生效；表格、`>` 引用块、代码与 HTML 注释不计入正文。项号与家族仓库的 `check.py`
+连续（那边 1–13 是一致性与投稿限制，28–29 是投稿包与匿名稿，所以文体项从 30 续编），`check.py` 直接导入本脚本。
 
 ## 交付格式（细则与示例见 `references/polish-protocol.md`）
 
@@ -111,7 +112,7 @@ python stylecheck.py sections/*.tex --baseline style_baseline.json
 
 - 四条不变量逐条核对：数字、引用、claim 强度与原文一致；没有新增句子；每条改动有规则编号；diff 可读。
 - `stylecheck.py` 复跑零 FAIL；豁免行都带 `% style-exempt` 且理由成立。
-- 体裁对了：回复信与信函没有被按正文标准误改；中文文本走了中文词表。
+- 体裁对了：回复信与信函没有被按正文标准误改（Markdown 回复信里 `>` 引用的审稿意见不计入机检）；中文文本走了中文词表。
 - 作者口吻保留：没有把作者的用词习惯替换成本技能的习惯；时态全文统一。
 - 深度模式：反向大纲连读能讲通；删减量在 10–15%；待补事实清单逐条写明需要什么。
 - 诚实边界已说明：文体规则显著降低但不能消除 AI 痕迹，终稿建议作者人工通读；AI 辅助披露按目标
@@ -119,7 +120,7 @@ python stylecheck.py sections/*.tex --baseline style_baseline.json
 
 ## 与家族技能的关系
 
-本技能是 `SKILLs-Generated`（`opt-paper-*`）与 `SKILLs-ML-Paper`（`ml-paper-*`）两组科研流水线的**文体
+本技能是 `SKILLs-OP-Paper`（`opt-paper-*`）与 `SKILLs-ML-Paper`（`ml-paper-*`）两组科研流水线的**文体
 层**，三组装在同一个 skills 目录时自动衔接：
 
 - **manuscript 技能（写稿）**：起草时引用本技能的规则写第一遍，每写完一节跑 `stylecheck.py`；三轮修订

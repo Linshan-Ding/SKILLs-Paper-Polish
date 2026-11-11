@@ -3,22 +3,40 @@
 本文件是 `paper-polish` 的代码层：`stylecheck.py` 对任意 `.tex` / `.md` / `.txt` 跑 18 项文体检查（项号
 14–27 与 30–33；28–29 是家族仓库 `check.py` 的投稿包与匿名稿项，`check.py` 直接
 `from stylecheck import run_style_checks`），`style_baseline.py` 从目标刊物已发表论文统计阈值、词表与
-连字符拼法。生成工程时两者落到 `paper_assets/scripts/`；单独使用时把代码块复制成同名文件即可。
+连字符拼法。生成工程时两者落到 `paper_assets/scripts/`；单独使用时把代码块复制成同名文件即可（放在同一目录：
+`style_baseline.py` 从 `stylecheck.py` 导入词表）。在本仓库的检出里，`python tests/run_fixtures.py --extract <目录>`
+做同样的事。
 
 ## 用法
 
 ```
 python stylecheck.py sections/*.tex                       # 每个分节文件单独计数（连接词、对冲、密度按节）
 python stylecheck.py paper/zh-draft.tex --zh              # 中文；不加 --zh 时 CJK 占比 >30% 自动识别
-python stylecheck.py draft.md notes.txt                   # Markdown / 纯文本：代码围栏与标题剥掉，**加粗** 计为句中强调
+python stylecheck.py draft.md notes.txt                   # Markdown / 纯文本：标题按节处理，表格、注释、引用块与代码不计入正文
 python stylecheck.py sections/*.tex --baseline style_baseline.json
 python stylecheck.py sections/*.tex --method-name FeasiSched   # 唯一允许的 CamelCase 自造名（方法总名）
 python stylecheck.py sections/*.tex --outline-dir paper   # 反向大纲 reverse-outline.md 写到哪
 python style_baseline.py --corpus ~/venue-papers          # 2–3 篇目标刊物论文（.tex/.txt）→ style_baseline.json
 ```
 
-退出码：有 FAIL 为 1。合法例外在该行加 `% style-exempt` 注释（数学与伪代码里的分号冒号、引用他人原文、
-术语首次定义的强调、必须保留的符号）。
+退出码：有 FAIL 为 1。合法例外在该行加 `% style-exempt` 注释，Markdown 里写 `<!-- style-exempt -->`（数学与
+伪代码里的分号冒号、引用他人原文、术语首次定义的强调、必须保留的符号）。
+
+## Markdown 与纯文本怎么读
+
+`.md` 与 `.txt` 先转成检查器认得的 LaTeX 子集，行号不变：
+
+| 构造 | 处理 |
+|---|---|
+| `#` 标题 | 出现两次以上的最浅一级算节，更深的算小节，其上单独一个文档标题不计。方法、实验、问题节因此接受项 25，引言与结论因此被项 33 识别，“摘要”或 “Abstract” 一节接受项 22 |
+| 管道表格 | 不计入正文，单元格里的分号、冒号、加粗不报；表内的箭头仍按项 31 报出 |
+| `>` 引用块 | 视为引文（他人原文、审稿意见、状态行），不计入正文 |
+| 围栏代码、行内代码、HTML 注释、YAML 头、分隔线 | 不计入正文 |
+| `[文字](链接)` | 只留文字 |
+| 字面的 `%` | 照常计入正文，不会被当成 LaTeX 注释吞掉该行其后的内容 |
+| `**加粗**`、`*斜体*` | 句中强调（项 21） |
+
+标题在早先的版本里被直接丢弃，项 22、25、33 在 Markdown 上从不触发。以前能通过的 Markdown 稿件现在可能新报这三项。
 
 ## 项目一览
 
@@ -39,7 +57,7 @@ python style_baseline.py --corpus ~/venue-papers          # 2–3 篇目标刊�
 | 26 | 簇引用 | FAIL |
 | 27 | 反向大纲 | note（写出文件） |
 | 30 | 生僻词（表内词逐个报出并给替换；目标刊物语料用过的放行） | 每节 >2 FAIL，否则 note |
-| 31 | 正文与表头的箭头、运算符、`±` 误用、`~`；连字符链、前缀连字符、连字符密度；CamelCase 自造名 | 箭头/运算符/连字符链/多于一个 CamelCase 名 FAIL，其余 note |
+| 31 | 正文与表头的箭头、运算符、`±` 误用、`~`；连字符链、前缀连字符、连字符密度；CamelCase 自造名；中文正文里包住汉字的 ASCII 直引号、汉字旁的半角 `, ; :` | 箭头/运算符/连字符链/多于一个 CamelCase 名/中文直引号 FAIL，其余 note |
 | 32 | 段落式证明（>120 词无 display）、证明内行内关系链、正文行内 ≥3 关系链、无依据的多行推导 | 前三者 FAIL，末者 note |
 | 33 | 枚举标签组数、总结段与路线图段位置、括号与 i.e./e.g. 密度、正文列表数 | 前两者 FAIL，其余 note |
 
@@ -47,7 +65,7 @@ python style_baseline.py --corpus ~/venue-papers          # 2–3 篇目标刊�
 
 | 键 | 默认 | 含义 | 语料覆盖 |
 |---|---|---|---|
-| `connectives` | 2 | 每节句首连接词与提示词上限 | 是（×1.2） |
+| `connectives` | 2 | 每节句首连接词与提示词上限 | 是（×1.2，不低于 1） |
 | `hedges` | 2 | 每节对冲词上限；堆叠对冲无论多少都 FAIL | 否 |
 | `triplets` | 2 | 每节"X, Y, and Z"三连排比上限 | 否 |
 | `paragraph_leads` | 4 | 每节 `\paragraph{}` 引导词上限 | 否 |
@@ -70,17 +88,25 @@ python style_baseline.py --corpus ~/venue-papers          # 2–3 篇目标刊�
 词表（英文连接词、禁用句式、对冲、强化副词、泛动词、抽象名词、效果形容词、生僻词替换表、固定连字符
 短语、前缀实拼表、CamelCase 白名单、总结与路线图开头；中文对应表）在脚本顶部，按领域增删后把改动记进
 交付说明。`style_baseline.json` 的 `vocabulary`（语料里出现 ≥2 次的词）与 `hyphenated`（语料里的连字符
-拼法）让项 30、31 按目标刊物的真实用法放行。
+拼法）让项 30、31 按目标刊物的真实用法放行。缩写白名单 `COMMON_ACRONYMS` 收组合优化与机器学习两个方向的通用缩写，
+名单里的缩写不占自造缩写预算；`CAMEL_OK` 收常见工具、模型与数据集的 CamelCase 名。
+
+## 自测
+
+改脚本后先把新代码回填到本文件，再在仓库根运行 `python tests/run_fixtures.py`。它从本文件抽出两个脚本，在
+`tests/fixtures/` 的七个样例上核对：埋错样例每一项都命中、FAIL 条数相符、不该出现的误报没有出现，干净样例零 FAIL；
+另跑一遍语料校准的往返。脚本里出现三个连续反引号会被它拦下（那会截断本文件的代码块）。
 
 ## stylecheck.py
 
 ```python
 #!/usr/bin/env python3
-"""Prose-style checks for academic text (items 14-27 of the manuscript checker), standalone.
+"""Prose-style checks for academic text (items 14-27 and 30-33 of the manuscript checkers), standalone.
 
     python stylecheck.py sections/*.tex                  # LaTeX sections
     python stylecheck.py paper/zh-draft.tex --zh         # Chinese text (auto-detected when >30% CJK)
-    python stylecheck.py draft.md notes.txt              # Markdown / plain text (**bold** counts as emphasis)
+    python stylecheck.py draft.md notes.txt              # Markdown / plain text (**bold** counts as emphasis;
+                                                         # headings are sections, tables and block quotes are not prose)
     python stylecheck.py sections/*.tex --baseline style_baseline.json
     python stylecheck.py sections/*.tex --method-name FeasiSched   # the one CamelCase name that is allowed
 
@@ -101,17 +127,18 @@ Items
  27. a reverse outline (first sentence of every paragraph) is written for review
  30. obscure vocabulary where the field uses a plain word
  31. symbols and hyphens: arrows and operators standing in for words (prose and tables),
-     hyphen chains, prefix hyphens the field does not use, CamelCase coined names
+     hyphen chains, prefix hyphens the field does not use, CamelCase coined names;
+     in Chinese text, ASCII straight quotes and half-width , ; : between Chinese characters
  32. proofs and derivations: no paragraph-style proofs, no inline relation chains,
      multi-line derivations carry step justifications or labels
  33. scaffolding: enumeration labels, summary and roadmap paragraphs, parenthetical
      density, "Note that"-style openers (folded into item 15), lists in running text
 
 Items 28-29 belong to the manuscript checker (submission package, anonymity), so the
-style items continue at 30. The numbering continues the manuscript checker's items 1-13 (consistency and venue
-limits, in check.py of the opt-paper-manuscript skill), which imports run_style_checks
-from this file. A line that legitimately breaks a rule carries a `% style-exempt`
-comment. Thresholds come from style_baseline.json when present (style_baseline.py
+style items continue at 30. The numbering continues the manuscript checkers' items 1-13 (consistency and venue
+limits, in check.py of the opt-paper-manuscript and ml-paper-manuscript skills), which import
+run_style_checks from this file. A line that legitimately breaks a rule carries a `% style-exempt`
+comment (in Markdown: `<!-- style-exempt -->` on that line). Thresholds come from style_baseline.json when present (style_baseline.py
 measures them from published papers in the target venue) and from the built-in
 defaults otherwise. Exit code 1 on any FAIL.
 """
@@ -129,7 +156,7 @@ def strip_comments(s: str) -> str:
     return re.sub(r"(?<!\\)%.*", "", s)
 
 
-# ---- 14-27: prose style ---------------------------------------------------
+# ---- 14-27, 30-33: prose style ------------------------------------------
 # Written drafts, not the revision pass, are where style is won: these checks
 # run after every section is drafted, then once more over the whole manuscript.
 
@@ -176,6 +203,8 @@ def prose_of(text: str) -> str:
         t = "\n" * t[:i].count("\n") + t[i:]
     t = re.sub(r"\\(?:re)?newcommand\*?\{[^}]*\}(?:\[\d\])*\{.*?\}\s*$", keep_lines, t, flags=re.M | re.S)
     t = re.sub(r"^.*(?:\\noindent\s*\\textbf\{(?:关键词|Highlights|Keywords)|通讯作者|Corresponding author)[^\n]*$", "", t, flags=re.M)
+    t = re.sub(r"^[ \t]*(?:\\textbf\{(?:关键词|Highlights|Keywords|Key words|Index Terms)"
+               r"|(?:关键词|Keywords|Key words|Index Terms)[ \t]*[:：])[^\n]*$", "", t, flags=re.M)   # keyword lines without \noindent (Markdown, plain text)
     t = re.sub(r"〔[^〕]*〕", " ", t)                              # template placeholders
     t = re.sub(r"\\begin\{(%s)\}.*?\\end\{\1\}" % MATH_ENVS, keep_lines, t, flags=re.S)
     t = re.sub(r"\$\$.*?\$\$", keep_lines, t, flags=re.S)
@@ -206,7 +235,15 @@ SUFFIX = r"(?:aware|driven|guided|enhanced|adaptive|based|oriented)"
 COMMON_ACRONYMS = {"PPO", "GNN", "GAT", "GCN", "DRL", "RL", "VRP", "TSP", "JSSP", "FJSP", "CVRP", "MDP",
                    "MLP", "CNN", "RNN", "LSTM", "LLM", "GPU", "CPU", "SOTA", "MIP", "MILP", "CP", "GA",
                    "SA", "PSO", "TS", "LKH", "HV", "IGD", "OOD", "API", "CI", "SGD", "KL", "GAE",
-                   "AM", "POMO", "OR", "AI", "ML", "DL", "NN", "SGD", "FIFO", "SPT", "MWKR", "LoRA"}
+                   "AM", "POMO", "OR", "AI", "ML", "DL", "NN", "FIFO", "SPT", "MWKR", "LoRA",
+                   # machine learning: models, training, evaluation
+                   "NLP", "CV", "ViT", "BERT", "GPT", "VAE", "GAN", "RAG", "VLM", "LM", "PLM", "MLM", "CLM",
+                   "SFT", "RLHF", "DPO", "PEFT", "QA", "VQA", "CoT", "ICL", "KD", "EMA", "MoE", "CLIP",
+                   "DDPM", "DDIM", "SAE", "NAS", "HPO", "KG", "GP", "BO", "ASR", "TTS", "OCR", "NER", "MT",
+                   "NLL", "MSE", "MAE", "RMSE", "AUC", "ROC", "AUROC", "BLEU", "ROUGE", "FID", "IoU", "ECE",
+                   "TPR", "FPR", "FLOPs", "SVM", "PCA", "KNN", "ELBO", "MCMC", "MLE", "MAP", "EM", "ERM",
+                   "IRM", "DRO", "PAC", "NTK", "ODE", "SDE", "PDE", "IID", "ReLU", "GELU", "DQN", "SAC",
+                   "TD", "MCTS", "DDPG", "TRPO", "MARL", "IRL", "BC", "MPC", "CQL", "IQL"}
 SUMMARY_TAIL = r"^(this|the proposed|our)\s+(design|approach|mechanism|strategy|scheme|framework|module)\s+(ensures|guarantees|enables|allows|makes)"
 # 30: obscure word -> what the field writes. Any word the venue corpus uses twice is allowed anyway.
 OBSCURE = {
@@ -227,7 +264,7 @@ OBSCURE = {
     "at the forefront": "leading", "cutting-edge": "recent", "groundbreaking": "(delete)",
     "transformative": "(delete)", "commence": "begin", "ascertain": "determine", "exemplify": "show",
     "posit": "propose", "purport": "claim", "substantiate": "support", "corroborate": "confirm",
-    "amalgamate": "combine", "juxtapose": "compare", "paradigm shift": "(delete)", "a myriad of": "many",
+    "amalgamate": "combine", "juxtapose": "compare", "paradigm shift": "(delete)",
     "an array of": "several", "hinges on": "depends on", "boils down to": "reduces to", "akin to": "similar to",
     "wherein": "where", "whereby": "by which", "thereof": "(rewrite)", "therein": "(rewrite)",
     "hereinafter": "(rewrite)", "aforementioned": "these", "utmost": "(delete)", "intriguing": "(delete)",
@@ -250,7 +287,10 @@ PREFIX_SOLID = {"nonlinear", "nonconvex", "nontrivial", "nonnegative", "nonzero"
                 "reoptimize", "recompute", "reuse", "semidefinite", "interdependent", "intraday", "postprocessing"}
 CAMEL_OK = {"PyTorch", "TensorFlow", "GitHub", "OpenAI", "DeepMind", "LaTeX", "BibTeX", "JavaScript",
             "MATLAB", "LightGBM", "XGBoost", "AdamW", "ResNet", "BatchNorm", "LayerNorm", "OpenReview",
-            "ArXiv", "YouTube", "MinMax", "OpenMP", "MuJoCo", "GraphSAGE", "PageRank", "WordNet", "ImageNet"}
+            "ArXiv", "YouTube", "MinMax", "OpenMP", "MuJoCo", "GraphSAGE", "PageRank", "WordNet", "ImageNet",
+            "HuggingFace", "LangChain", "NumPy", "SciPy", "TensorBoard", "GloVe", "MoCo", "AlphaFold", "AlphaGo",
+            "AlphaZero", "HumanEval", "MobileNet", "EfficientNet", "DenseNet", "AlexNet", "SentencePiece",
+            "WordPiece", "ControlNet", "DreamBooth", "PointNet", "DeepWalk", "CodeLlama"}
 # 33: scaffolding openers
 SUMMARY_OPENERS = ("in summary", "to summarize", "to sum up", "in conclusion", "taken together",
                    "in this section, we have", "we have shown that", "overall, this section", "all in all")
@@ -260,7 +300,8 @@ ZH_SUMMARY_OPENERS = ("综上", "总之", "总而言之", "总的来说", "本�
 ZH_ROADMAP_OPENERS = ("本文其余部分", "本节其余部分", "本文的组织", "本文结构安排", "下文安排")
 
 # ---- word lists: Chinese -------------------------------------------------
-ZH_CONNECTIVES = ("此外", "而且", "另外", "值得注意的是", "综上所述", "首先", "其次", "最后", "总之", "与此同时")
+# "值得注意的是" and "综上所述" are banned outright (item 16), so they do not also count against the budget of item 15
+ZH_CONNECTIVES = ("此外", "而且", "另外", "首先", "其次", "最后", "总之", "与此同时")
 ZH_BANNED = ("值得注意的是", "综上所述", "旨在", "本文所提出的")
 ZH_HEDGES = ("可能", "或许", "在一定程度上", "某种程度上")
 ZH_INTENSIFIERS = ("显著地", "有效地", "极大地", "大幅", "充分地", "全面地")
@@ -284,6 +325,7 @@ def load_thresholds(baseline, notes: list[str]) -> dict:
         for k in ("intensifier_per_k", "generic_verb_per_k", "abstract_noun_per_k", "connectives"):
             if k in base:
                 TH[k] = round(base[k] * 1.2, 2)
+        TH["connectives"] = max(1.0, TH["connectives"])           # the rule allows one or two per section: never below 1
         if "sent_cv" in base:
             TH["sent_cv_min"] = round(base["sent_cv"] * 0.8, 2)
         TH["_vocab"] = set(base.get("vocabulary", []))          # words the venue itself uses: item 30 lets them pass
@@ -294,11 +336,44 @@ def load_thresholds(baseline, notes: list[str]) -> dict:
 
 
 def plain_to_texish(text: str) -> str:
-    """Markdown / plain text -> the subset of LaTeX the checks understand: fenced code dropped
-    (newlines kept), headings dropped, **bold** mapped to \\textbf{}, *italic* to \\emph{}."""
+    """Markdown / plain text -> the subset of LaTeX the checks understand. The line count is kept.
+
+    Not prose, dropped: fenced code, YAML front matter, HTML comments, thematic breaks, and
+    block quotes (quoted material: other people's words, reviewer comments, status lines).
+    Mapped: headings -> \\section{} / \\subsection{} (the section level is the shallowest
+    heading level used at least twice; a single title above it is dropped), pipe tables ->
+    a tabular block (cells are not prose; arrow glyphs in them are still reported),
+    inline code -> \\texttt{}, [text](url) -> text, **bold** -> \\textbf{}, *italic* -> \\emph{}.
+    A literal % is escaped so that it does not start a LaTeX comment; a line carrying
+    <!-- style-exempt --> ends up with a trailing "% style-exempt"."""
     keep_lines = lambda m: "\n" * m.group(0).count("\n")
     t = re.sub(r"`{3}.*?`{3}", keep_lines, text, flags=re.S)        # fenced code (written without literal triple backticks so the file embeds in Markdown)
-    t = re.sub(r"^#{1,6} .*$", "", t, flags=re.M)
+    t = re.sub(r"\A---[ \t]*\n.*?\n(?:---|\.\.\.)[ \t]*(?=\n|\Z)", keep_lines, t, count=1, flags=re.S)   # YAML front matter
+    t = re.sub(r"<!--.*?-->", lambda m: ("\x00" if "style-exempt" in m.group(0) else "") + keep_lines(m), t, flags=re.S)
+    t = re.sub(r"`([^`\n]+)`", lambda m: "\\texttt{" + re.sub(r"[{}$%\\]", " ", m.group(1)) + "}", t)   # inline code
+    t = re.sub(r"(?<!\\)%(?!\s*style-exempt)", r"\\%", t)
+    levels = [len(m.group(1)) for m in re.finditer(r"^(#{1,6})[ \t]+\S", t, flags=re.M)]
+    sec = min((n for n in set(levels) if levels.count(n) >= 2), default=min(levels, default=1))
+    lines = t.split("\n")
+    is_row = [bool(re.match(r"\s*\|.*\|\s*$", ln)) for ln in lines]
+    for i, ln in enumerate(lines):
+        exempt = "\x00" in ln
+        ln = ln.replace("\x00", "")
+        h = re.match(r"(#{1,6})[ \t]+(.*?)[ \t]*#*[ \t]*$", ln)
+        if h:
+            title, lvl = re.sub(r"\\texttt|[`*{}\\$%]", "", h.group(2)).strip(), len(h.group(1))
+            ln = "" if lvl < sec else ("\\section{%s}" if lvl == sec else "\\subsection{%s}") % title
+        elif re.match(r"\s*>", ln) or re.match(r"\s*([-*_=])(?:[ \t]*\1){2,}[ \t]*$", ln):
+            ln = ""                                                 # block quote, thematic break, setext underline
+        elif is_row[i]:
+            if i == 0 or not is_row[i - 1]:
+                ln = "\\begin{tabular}{l} " + ln
+            if i + 1 == len(lines) or not is_row[i + 1]:
+                ln = ln + " \\end{tabular}"
+        lines[i] = ln + (" % style-exempt" if exempt else "")
+    t = "\n".join(lines)
+    t = re.sub(r"!\[[^\]\n]*\]\([^)\n]*\)", " ", t)                  # images
+    t = re.sub(r"\[([^\]\n]+)\]\([^)\s]*\)", r"\1", t)              # links keep their text
     t = re.sub(r"\*\*(.+?)\*\*", r"\\textbf{\1}", t)
     t = re.sub(r"(?<![*\w])\*(?!\*)([^*\n]+?)\*(?![*\w])", r"\\emph{\1}", t)
     return t
@@ -306,7 +381,7 @@ def plain_to_texish(text: str) -> str:
 
 def run_style_checks(sources, style_sources=None, zh: bool = False, baseline=None, root=None,
                      abstract_text=None, method_name: str | None = None):
-    """Items 14-27 over `sources` (whole text: acronym budget, abstract) and `style_sources`
+    """Items 14-27 and 30-33 over `sources` (whole text: acronym budget, abstract) and `style_sources`
     (per-file items; defaults to `sources`). Returns (problems, notes). `root` is where the
     reverse outline is written. `abstract_text` lets check.py pass the abstract it already parsed."""
     ZH = zh
@@ -530,19 +605,24 @@ def run_style_checks(sources, style_sources=None, zh: bool = False, baseline=Non
             problems.append(f"stacked modifier chain: '{m}'")
 
     # 22: the abstract is one paragraph
-    if ZH:
-        m = re.search(r"\\section\*\{摘要\}(.*?)(?=\\vspace|\\noindent\\textbf\{关键词|\\section)", whole, re.S)
+    if ZH:                                                      # \section*{摘要} in LaTeX, a "摘要" heading in Markdown
+        m = re.search(r"\\section\*?\{\s*(?:中文)?摘\s*要\s*\}(.*?)"
+                      r"(?=\\vspace|(?:\\noindent\s*)?\\textbf\{关键词|^\s*关键词\s*[:：]|\\section|\Z)", whole, re.S | re.M)
         abstract_text = m.group(1) if m else None
     elif abstract_text is None:                                 # standalone use: find the abstract ourselves
-        m = re.search(r"\\begin\{abstract\}(.*?)\\end\{abstract\}", whole, re.S)
+        m = re.search(r"\\begin\{abstract\}(.*?)\\end\{abstract\}", whole, re.S) or \
+            re.search(r"\\section\*?\{\s*abstract\s*\}(.*?)"
+                      r"(?=(?:\\noindent\s*)?\\textbf\{(?:keywords|key words|index terms)|^\s*(?:keywords|index terms)\s*[:：]|\\section|\Z)",
+                      whole, re.S | re.M | re.I)
         abstract_text = m.group(1) if m else None
     if abstract_text is not None:
         inner = re.sub(r"^\s*\\noindent", "", abstract_text.strip())
-        if re.search(r"\n\s*\n", inner.strip()) or "\\par" in inner:
+        if re.search(r"\n\s*\n", inner.strip()) or re.search(r"\\par(?![A-Za-z])", inner):
             problems.append("abstract is broken into paragraphs -- a single paragraph, six sentences")
 
     # 27: reverse outline for the logic pass
     if outline:
+        ROOT.mkdir(parents=True, exist_ok=True)
         out = (ROOT / ("reverse-outline-zh.md" if ZH else "reverse-outline.md"))
         out.write_text("# Reverse outline (first sentence of every paragraph)\n\n" + "\n".join(outline) + "\n",
                        encoding="utf-8")
@@ -594,7 +674,7 @@ def run_style_checks(sources, style_sources=None, zh: bool = False, baseline=Non
                 continue
             if re.search(r"[→⇒↑↓⇐⇔]", line) or re.search(r"\$\s*\\(?:to|rightarrow|Rightarrow|longrightarrow|uparrow|downarrow|nearrow|searrow)\s*\$", line):
                 problems.append(f"arrow standing in for words at {name}:{i} -- write 'leads to' / 'higher is better'")
-            if re.search(r"[×÷≈≤≥]", line) or re.search(r"(?<![\w$])[+\u2212]\d+(?:\.\d+)?\s*(?:%|pp\b|points?\b)", line) \
+            if re.search(r"[×÷≈≤≥]", line) or re.search(r"(?<![\w$])[+\u2212]\d+(?:\.\d+)?\s*(?:\\?%|pp\b|points?\b)", line) \
                     or re.search(r"\b\d+(?:\.\d+)?\s*[×x]\s*(?:faster|slower|fewer|more|larger|smaller|speed)", line) \
                     or re.search(r"\$\s*\d+(?:\.\d+)?\s*\\times\s*\$", line):
                 problems.append(f"operator standing in for words at {name}:{i} -- 'three times faster', 'an increase of 2.1 points'")
@@ -610,6 +690,16 @@ def run_style_checks(sources, style_sources=None, zh: bool = False, baseline=Non
                 problems.append(f"{name}:{line} table uses arrow glyphs -- say 'lower is better' in the caption")
             if re.search(r"\(\s*[+\u2212-]\s*\)|\+/[\u2212-]|(?<![\w$])[+\u2212]\d", tbl):
                 notes.append(f"{name}:{line} table carries +/- markers -- give the quantity its own column with a unit")
+        if ZH:                                                      # Chinese punctuation: curly quotes, full-width marks
+            src_lines = raw.splitlines()
+            for i, line in enumerate(prose.splitlines(), 1):
+                if "style-exempt" in (src_lines[i - 1] if i <= len(src_lines) else ""):
+                    continue
+                if re.search(r'(?<!\\)"[^"\n]*[\u4e00-\u9fff][^"\n]*(?<!\\)"', line):
+                    problems.append(f"ASCII straight quotes around Chinese text at {name}:{i} -- use the curly quotes \u201c \u201d")
+                hw = re.search(r"(?<=[\u4e00-\u9fff])[ \t]*[,;:]|[,;:][ \t]*(?=[\u4e00-\u9fff])", line)
+                if hw:
+                    notes.append(f"half-width '{hw.group(0).strip()}' next to a Chinese character at {name}:{i} -- use the full-width mark")
         if not ZH:
             chains = [w for w in re.findall(r"\b[A-Za-z]+(?:-[A-Za-z]+){2,}\b", prose) if w.lower() not in HYPHEN_OK]
             for w in sorted(set(chains)):
@@ -746,12 +836,8 @@ import re
 import statistics
 from pathlib import Path
 
-CONNECTIVES = ("moreover", "furthermore", "additionally", "in addition", "notably",
-               "consequently", "specifically", "overall", "meanwhile", "nevertheless", "thus")
-INTENSIFIERS = ("significantly", "substantially", "remarkably", "effectively", "seamlessly",
-                "comprehensively", "robustly", "dramatically", "greatly", "highly")
-GENERIC_VERBS = ("facilitate", "enable", "ensure", "enhance", "demonstrate", "exhibit", "achieve", "utilize")
-ABSTRACT_NOUNS = ("framework", "paradigm", "mechanism", "scheme", "module", "pipeline", "strategy")
+# the same word lists the checker counts with (stylecheck.py sits next to this file)
+from stylecheck import ABSTRACT_NOUNS, CONNECTIVES, GENERIC_VERBS, INTENSIFIERS
 
 ap = argparse.ArgumentParser(description=__doc__)
 ap.add_argument("--corpus", type=Path, default=Path(__file__).resolve().parents[1] / "style_corpus")

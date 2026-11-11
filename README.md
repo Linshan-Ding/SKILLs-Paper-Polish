@@ -23,6 +23,8 @@
 ```
 SKILLs-Paper-Polish/
 ├── README.md
+├── CLAUDE.md                             # 在本仓库开会话时的说明：技能在哪里、维护纪律
+├── tests/                                # 检查脚本的自测：run_fixtures.py + 七个埋错 / 干净样例（不随技能安装）
 └── paper-polish/
     ├── SKILL.md                          # 决策层：模式、不变量、体裁规则、流程、自检
     └── references/
@@ -42,20 +44,24 @@ SKILLs-Paper-Polish/
 - "审稿人说方法节读不出贡献，太空了，重写" → 深度去 AI 味
 - "把这封回复信的文风统一一下" → 润色模式，按回复信体裁豁免礼节句式
 
-机检单独可用：
+机检单独可用。两个脚本以 Markdown 代码块形式放在 `paper-polish/references/stylecheck.md` 里，仓库里没有
+单独的 `.py` 文件：技能生成工程时把它们写到项目的 `paper_assets/scripts/` 下；想直接用，先把两个代码块存成
+`stylecheck.py` 与 `style_baseline.py`（放在同一目录），再运行：
 
 ```
-python paper-polish/references/stylecheck.py sections/*.tex
-python paper-polish/references/stylecheck.py draft.md
-python paper-polish/references/stylecheck.py --help
+python tests/run_fixtures.py --extract .     # 在本仓库的检出里：把两个脚本写到当前目录
+python stylecheck.py sections/*.tex
+python stylecheck.py draft.md
+python stylecheck.py --help
 ```
 
-脚本以 Markdown 代码块形式放在 `references/stylecheck.md` 里，技能生成工程时把它们写到项目的
-`paper_assets/scripts/` 下；想直接用，从该文件复制出 `stylecheck.py` 与 `style_baseline.py` 即可。
+Markdown 的标题按节处理，表格、`>` 引用块、代码与 HTML 注释不计入正文，字面的 `%` 不再吞掉该行其后的内容。
+标题在早先的版本里被丢弃，以前能通过的 Markdown 稿件现在可能新报项 22（摘要单段）、25（段落具体性）、
+33（总结段与路线图段的位置）。改脚本后运行 `python tests/run_fixtures.py` 自测。
 
 ## 与两组科研流水线的关系
 
-本仓库是 [`SKILLs-Generated`](https://github.com/Linshan-Ding/SKILLs-Generated)（组合优化方向 `opt-paper-*`）
+本仓库是 [`SKILLs-OP-Paper`](https://github.com/Linshan-Ding/SKILLs-OP-Paper)（组合优化方向 `opt-paper-*`）
 与 [`SKILLs-ML-Paper`](https://github.com/Linshan-Ding/SKILLs-ML-Paper)（机器学习方向 `ml-paper-*`）共用的
 **文体层**：规则、正例库、文体检查器、语料校准脚本只维护在这里，两组的写稿、rebuttal、投稿包技能用
 `../paper-polish/references/...` 引用。三组装在同一个 skills 目录下即可衔接；两组的 `check.py` 直接导入
