@@ -1,8 +1,9 @@
 # 文体改写对照（AI 腔 → 期刊腔）
 
 本文件是 `paper-polish` 规则 `style-rules.md` 的正例库：起草前读一遍，润色与改写时对照校准。
-十三组对照覆盖表层指纹（连接词链、分号、造词与缩写、破折号/冒号/加粗、分段摘要、等长段落、生僻词、
-符号与连字符、段落式证明、枚举与总结脚手架、中文标点）与深层空洞（只报结果不给因果）。规则记不全没关系，**照着"改写后"的样子写**。
+十五组对照覆盖表层指纹（连接词链、分号、造词与缩写、破折号/冒号/加粗、分段摘要、等长段落、生僻词、
+符号与连字符、段落式证明、枚举与总结脚手架、中文标点）、深层空洞（只报结果不给因果）与防御性写作（对照三、
+十四、十五）。规则记不全没关系，**照着"改写后"的样子写**。每组"改写后"都过了 `stylecheck.py`。
 
 ## 对照一：连接词链 → given-new 衔接
 
@@ -51,14 +52,20 @@
 > cases. It should be noted that we do not claim optimality in all
 > settings, and results might vary depending on the instance distribution.
 
-**改写后（论断干净，边界可判定且集中声明）：**
+**改写后（结论句干净）：**
 
-> The mask reduces the steps to reach a 5\% validation gap by \SpeedupVsBase{}
-> (Table 5). All results are on instances of up to $50\times20$ drawn from the distribution in Table 1. Larger scales and other distributions are outside
-> this study's scope (Section 7).
+> The mask reduces the steps to reach a 5\% validation gap by \SpeedupVsBase{} (Table 5).
+
+**局限节（第 7 节）收下边界，写成可判定条件：**
+
+> All results are on instances of up to $50\times20$ drawn from the distribution in Table 1. Larger instances
+> and other distributions are not tested.
 
 要领：(1) 结论句给数字与出处，一个限定词都不留；(2) 适用范围写成**可判定条件**（规模、分布、
-表号），不写 "in some cases"；(3) 免责内容集中到 limitations 节，正文不挂尾巴。
+表号），不写 "in some cases"；(3) 免责内容集中到 limitations 节，正文不挂尾巴；"we do not claim optimality
+in all settings"没有可判定的内容，删。机检：改前项 17 报 5 条（对冲超预算、堆叠、不可判定限定、元评论、
+局限节外的免责），改后 0。这一组是起草时的写法，数字 `\SpeedupVsBase{}` 来自实验；润色已有文本时数字
+必须是原文或附带材料里已有的，没有就留待补事实。
 
 ## 对照四：造词与缩写通胀 → 既有术语、一个缩写
 
@@ -248,11 +255,75 @@ unchanged and $g$ is unbiased.
 要领：中文正文里的引号一律“ ”，汉字旁的逗号、分号、冒号一律全角。半角分号换成全角之后仍是散文分号（14），
 要拆句；英文词之间与数字之间的半角标点（`PPO, DQN`、`1:2`）保持原样。
 
+## 对照十四：防御性写作的几种句式 → 删引导语、迁边界、留指向
+
+**改写前（实验节的一段：元评论、假想反方、借口、免责、范围声明、情绪词）：**
+
+> It should be noted that the reference set contains only 64 samples. One might argue that this is too few.
+> However, Table 6 shows that accuracy changes by less than 0.3 points between 32 and 128 samples. Due to space
+> limitations, the sensitivity study is deferred to Appendix C. We do not claim that the filter removes every
+> noisy label, and larger models are beyond the scope of this paper. Unfortunately, the 13B model did not fit in
+> memory.
+
+**改写后（实验节只留事实与指向）：**
+
+> The reference set contains 64 samples. Accuracy changes by less than 0.3 points between 32 and 128 samples
+> (Table 6), and the sensitivity study is in Appendix C.
+
+**局限节收下迁来的句子（原意不变，缺的条件留占位）：**
+
+> We do not claim that the filter removes every noisy label [FACT NEEDED: the residual noise rate after
+> filtering, with its table]. Larger models are beyond the scope of this paper, because the 13B model did not
+> fit in memory.
+
+要领：每种句式有固定改法。元评论删引导语；假想反方删掉，证据句（表 6）直接陈述；借口删掉，指向（附录 C）
+留下；"Unfortunately"删掉，它背后的事实（13B 模型放不进显存）跟着范围声明进局限节；免责与范围声明整句迁移，
+不改意思。"only 64"的 only 是替作者先认错，删掉后数字自己说话。没有一句被加强：边界一条没少，只是换了地方。
+机检：改前项 17 报 6 条（元评论、预先辩护、两处道歉与借口、局限节外的免责与范围声明），改后 0；局限节里的
+两句各留一条 note，提醒作者补上可判定的条件。
+
+**回复信里的同类句子（`--genre rebuttal`）：**
+
+> We thank the reviewer for this insightful comment. We would like to clarify that the threshold may
+> potentially affect the results to some extent. We apologize for the confusion. Due to space limitations,
+> the sensitivity study was in Appendix C.
+
+改写后：
+
+> We thank the reviewer for this insightful comment. Across the thresholds tested in Appendix C, accuracy
+> varies by [FACT NEEDED: the range from the Appendix C table].
+
+要领：致谢是体裁礼节，不动。澄清引导语、道歉与借口在回复信里只报 note，三句叠在一起仍是在绕，留下可判定的
+答复即可。"may potentially … to some extent"的三重对冲在回复信里照样 FAIL（对冲超预算加堆叠），改成附录 C
+里的数字，原文没给就留占位。
+
+## 对照十五：中文的防御性写作 → 同样的改法
+
+**改写前：**
+
+> 需要指出的是，参考集只有 64 条样本。有人可能会认为参考集太小。诚然，表 6 显示样本数在 32 到 128 之间
+> 变化时准确率变化不到 0.3 个百分点。限于篇幅，敏感性实验放在附录 C。本文并不声称过滤器能去掉全部噪声标签，
+> 更大规模的模型留待今后研究。
+
+**改写后（实验节）：**
+
+> 参考集有 64 条样本。样本数在 32 到 128 之间变化时，准确率变化不到 0.3 个百分点（表 6），敏感性实验见附录 C。
+
+**局限节（整句迁入）：**
+
+> 本文并不声称过滤器能去掉全部噪声标签〔待补事实：此处需要过滤后的残余噪声率及其表号〕，更大规模的模型留待
+> 今后研究。
+
+要领：中文句式与英文一一对应。"需要指出的是"是元评论，"有人可能会认为""诚然"是预先辩护，"限于篇幅"是
+借口，"本文并不声称"是免责，"留待今后研究"是范围声明。"只有"与英文的 only 一样是替作者先认错。机检：改前
+项 17 报 6 条，改后 0，局限节里留两条 note。
+
 ## 使用方式
 
 - 起草：每节先落事实清单（`paper/facts/<section>.md`），再读本文件 30 秒，按"改写后"的密度与
   句法写，每句回指清单里的一条事实。
 - 机检：写完一节跑 `stylecheck.py`（项 14–27、30–33）；阈值可用 `style_baseline.py` 从目标刊物已发表论文
   校准。
-- 中文写作同样适用：连接词（此外/而且/值得注意的是）、对冲（可能/或许/在一定程度上）、标点
-  （——/句中：）、造词（××感知/××驱动）的对应规则见 `style-rules.md` 的中文条款。
+- 中文写作同样适用：连接词（此外/而且/值得注意的是）、对冲（可能/或许/在一定程度上）、防御性句式
+  （需要指出的是/诚然/限于篇幅/留待今后研究）、标点（——/句中：）、造词（××感知/××驱动）的对应规则见
+  `style-rules.md` 的中文条款与第 3 节。

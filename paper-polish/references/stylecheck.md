@@ -10,17 +10,19 @@
 ## 用法
 
 ```
-python stylecheck.py sections/*.tex                       # 每个分节文件单独计数（连接词、对冲、密度按节）
+python stylecheck.py sections/*.tex                       # 每个分节文件单独计数（连接词、密度按文件，对冲按文件里的每个 \section）
 python stylecheck.py paper/zh-draft.tex --zh              # 中文；不加 --zh 时 CJK 占比 >30% 自动识别
 python stylecheck.py draft.md notes.txt                   # Markdown / 纯文本：标题按节处理，表格、注释、引用块与代码不计入正文
 python stylecheck.py sections/*.tex --baseline style_baseline.json
 python stylecheck.py sections/*.tex --method-name FeasiSched   # 唯一允许的 CamelCase 自造名（方法总名）
 python stylecheck.py sections/*.tex --outline-dir paper   # 反向大纲 reverse-outline.md 写到哪
+python stylecheck.py response.md --genre rebuttal         # 回复信（cover letter 用 --genre letter）：项 17 的礼节与让步句降为 note
 python style_baseline.py --corpus ~/venue-papers          # 2–3 篇目标刊物论文（.tex/.txt）→ style_baseline.json
 ```
 
 退出码：有 FAIL 为 1。合法例外在该行加 `% style-exempt` 注释，Markdown 里写 `<!-- style-exempt -->`（数学与
-伪代码里的分号冒号、引用他人原文、术语首次定义的强调、必须保留的符号）。
+伪代码里的分号冒号、引用他人原文、术语首次定义的强调、必须保留的符号）。待补事实占位（`〔待补事实：…〕`、
+`[FACT NEEDED: …]`）不算正文。
 
 ## Markdown 与纯文本怎么读
 
@@ -38,6 +40,30 @@ python style_baseline.py --corpus ~/venue-papers          # 2–3 篇目标刊�
 
 标题在早先的版本里被直接丢弃，项 22、25、33 在 Markdown 上从不触发。以前能通过的 Markdown 稿件现在可能新报这三项。
 
+## 项 17：防御性写作怎么查
+
+规则与改法在 `style-rules.md` 第 3 节，修正流程在 `polish-protocol.md` 第 6 节。脚本按句检查，报告里的名字与判定：
+
+| 报告里的名字 | 查什么 | 判定 |
+|---|---|---|
+| `N hedges in section '…'` | 对冲词（`HEDGES` / `ZH_HEDGES`）按 `\section` 计数，标题之前的部分（摘要）单独算一节 | 超过 `hedges` 即 FAIL |
+| `stacked hedge` | 一句里情态词（may / might / could）加软化词（possibly、potentially、to some extent、seems to、we believe 等），或两个软化词；中文一句里两个对冲词 | FAIL |
+| `vague qualifier` | in some cases、under certain / mild conditions、to a large extent；在某些情况下、在一定条件下、在适当条件下 | 同一句没有数字、行内公式、引用或交叉引用、附录、例子（e.g. / such as / 例如）时 FAIL；紧跟 where / when / with 等点名条件的不报 |
+| `meta-comment`、`pre-emptive defence`、`apology or excuse` | `DEFENSIVE` / `ZH_DEFENSIVE` 里的句式 | FAIL；`--genre rebuttal/letter` 下 note |
+| `disclaimer`、`scope caveat` | 免责、范围声明与后续工作 | 局限区外 FAIL，局限区内 note；文件里没有任何节标题时 note；`--genre rebuttal/letter` 下不查 |
+| `novelty hedge … times outside the abstract` | to the best of our knowledge、as far as we know；据我们所知 | 摘要区之外全稿合计两次及以上 FAIL（只在 `--genre paper`） |
+
+- **局限区**：标题匹配 `LIMIT_TITLE`（limitation、conclusion、discussion、future、threat、outlook、scope；局限、不足、
+  结论、讨论、展望、未来、研究边界、适用范围）的节与小节，范围到下一个同级或更高级标题；`\paragraph{Limitations}`
+  引导段到空行为止；文件名匹配时整个文件都算。**摘要区**：`abstract` 环境、标题为 Abstract 或"摘要"的节、
+  文件名含 abstract 或"摘要"。Markdown 的标题先转成 `\section` / `\subsection`，规则相同。
+- 带 `% style-exempt` 的行既不逐句检查，也不计入对冲预算。行号是句子开始的那一行。
+- 中文对冲词表不计"尽可能""不可能""所有可能的""可能性""大概率"这类不表示推测的用法。
+
+旧版只查对冲预算与堆叠，预算按整个文件计。现在预算按节计，单文件的整篇稿件反而更宽；对冲词表补了 possibly、
+perhaps、potentially、somewhat、seems / appears to、we believe 与"也许、大概、似乎"，并新增其余七类检查，所以以前
+能通过的稿件可能新报项 17。
+
 ## 项目一览
 
 | 项 | 查什么 | 判定 |
@@ -45,7 +71,7 @@ python style_baseline.py --corpus ~/venue-papers          # 2–3 篇目标刊�
 | 14 | 散文分号 | FAIL |
 | 15 | 句首连接词与提示词（Moreover / Note that / Importantly …）每节预算 | FAIL |
 | 16 | 禁用句式（it is worth noting / leverage / delve …） | FAIL |
-| 17 | 对冲预算与堆叠对冲 | FAIL |
+| 17 | 防御性写作：对冲预算（按节）与堆叠、不可判定的限定、元评论、预先辩护、道歉与借口、局限节外的免责与范围声明、摘要外重复的新颖性对冲 | FAIL；局限节内的免责与范围声明 note；`--genre rebuttal/letter` 下礼节与让步句 note |
 | 18 | 命名与缩写预算、效果形容词造名、修饰词链 | FAIL / note |
 | 19 | 句中冒号 | FAIL |
 | 20 | 破折号插入语 | FAIL |
@@ -66,7 +92,7 @@ python style_baseline.py --corpus ~/venue-papers          # 2–3 篇目标刊�
 | 键 | 默认 | 含义 | 语料覆盖 |
 |---|---|---|---|
 | `connectives` | 2 | 每节句首连接词与提示词上限 | 是（×1.2，不低于 1） |
-| `hedges` | 2 | 每节对冲词上限；堆叠对冲无论多少都 FAIL | 否 |
+| `hedges` | 2 | 每节（`\section`）对冲词上限；堆叠对冲无论多少都 FAIL | 否 |
 | `triplets` | 2 | 每节"X, Y, and Z"三连排比上限 | 否 |
 | `paragraph_leads` | 4 | 每节 `\paragraph{}` 引导词上限 | 否 |
 | `sent_cv_min` | 0.35 | 句长变异系数下限（节内句数 ≥8 才算） | 是（×0.8） |
@@ -85,8 +111,8 @@ python style_baseline.py --corpus ~/venue-papers          # 2–3 篇目标刊�
 | `proof_words` | 120 | 证明超过此词数而无 display 数学即 FAIL | 否 |
 | `camel_names` | 1 | 允许的 CamelCase 自造名个数（方法总名） | 否 |
 
-词表（英文连接词、禁用句式、对冲、强化副词、泛动词、抽象名词、效果形容词、生僻词替换表、固定连字符
-短语、前缀实拼表、CamelCase 白名单、总结与路线图开头；中文对应表）在脚本顶部，按领域增删后把改动记进
+词表（英文连接词、禁用句式、对冲、防御性句式 `DEFENSIVE`、强化副词、泛动词、抽象名词、效果形容词、生僻词
+替换表、固定连字符短语、前缀实拼表、CamelCase 白名单、总结与路线图开头；中文对应表）在脚本顶部，按领域增删后把改动记进
 交付说明。`style_baseline.json` 的 `vocabulary`（语料里出现 ≥2 次的词）与 `hyphenated`（语料里的连字符
 拼法）让项 30、31 按目标刊物的真实用法放行。缩写白名单 `COMMON_ACRONYMS` 收组合优化与机器学习两个方向的通用缩写，
 名单里的缩写不占自造缩写预算；`CAMEL_OK` 收常见工具、模型与数据集的 CamelCase 名。
@@ -94,8 +120,8 @@ python style_baseline.py --corpus ~/venue-papers          # 2–3 篇目标刊�
 ## 自测
 
 改脚本后先把新代码回填到本文件，再在仓库根运行 `python tests/run_fixtures.py`。它从本文件抽出两个脚本，在
-`tests/fixtures/` 的七个样例上核对：埋错样例每一项都命中、FAIL 条数相符、不该出现的误报没有出现，干净样例零 FAIL；
-另跑一遍语料校准的往返。脚本里出现三个连续反引号会被它拦下（那会截断本文件的代码块）。
+`tests/fixtures/` 的十个样例上核对：埋错样例每一项都命中、FAIL 条数相符、不该出现的误报没有出现，干净样例零 FAIL；
+回复信样例按论文与回复信两种体裁各跑一次；另跑一遍语料校准的往返。脚本里出现三个连续反引号会被它拦下（那会截断本文件的代码块）。
 
 ## stylecheck.py
 
@@ -109,12 +135,16 @@ python style_baseline.py --corpus ~/venue-papers          # 2–3 篇目标刊�
                                                          # headings are sections, tables and block quotes are not prose)
     python stylecheck.py sections/*.tex --baseline style_baseline.json
     python stylecheck.py sections/*.tex --method-name FeasiSched   # the one CamelCase name that is allowed
+    python stylecheck.py response.md --genre rebuttal    # response letters and cover letters (--genre letter)
 
 Items
  14. no semicolons survive in the running prose
  15. sentence-initial connectives stay within budget per section
  16. none of the banned stock phrases appears
- 17. hedging stays within budget and never stacks
+ 17. no defensive writing: hedges within budget per section and never stacked in one sentence,
+     every qualifier decidable, no meta-comments, pre-emptive defences, apologies or excuses,
+     disclaimers and scope caveats only in the limitations section, "to the best of our
+     knowledge" at most once outside the abstract
  18. coined names and self-made acronyms stay within the naming budget
  19. no mid-sentence colon in the running prose
  20. no dash used as a parenthetical in the running prose
@@ -160,6 +190,7 @@ def strip_comments(s: str) -> str:
 # Written drafts, not the revision pass, are where style is won: these checks
 # run after every section is drafted, then once more over the whole manuscript.
 
+MARK_MATH, MARK_REF = " \u27e6m\u27e7 ", " \u27e6r\u27e7 "      # what prose_of(marks=True) leaves for inline math and references
 MATH_ENVS = r"(?:equation|align|gather|multline|eqnarray|algorithmic|tabular|tabularx|thebibliography|center|titlepage)\*?"
 # Macros whose argument is structural text (captions, placeholders, notes), not running prose.
 STRUCTURAL_MACROS = {"caption": 1, "figplace": 4, "draftnote": 1, "label": 1, "includegraphics": 1,
@@ -191,11 +222,13 @@ def strip_macro(t: str, name: str, nargs: int) -> str:
     return "".join(out)
 
 
-def prose_of(text: str) -> str:
+def prose_of(text: str, marks: bool = False) -> str:
     """Strip everything that legitimately carries semicolons, colons, bold or keywords.
 
     Multi-line strips keep their newlines so line numbers still match the
-    source file (the style-exempt lookup depends on that)."""
+    source file (the style-exempt lookup depends on that). With marks=True, inline
+    math becomes MARK_MATH and a citation or cross-reference becomes MARK_REF, so a
+    check can still see that a sentence points at a number, a formula or a table."""
     keep_lines = lambda m: "\n" * m.group(0).count("\n")
     t = strip_comments(text)
     if "\\begin{document}" in t:                              # single-file sources: drop the preamble
@@ -205,11 +238,14 @@ def prose_of(text: str) -> str:
     t = re.sub(r"^.*(?:\\noindent\s*\\textbf\{(?:关键词|Highlights|Keywords)|通讯作者|Corresponding author)[^\n]*$", "", t, flags=re.M)
     t = re.sub(r"^[ \t]*(?:\\textbf\{(?:关键词|Highlights|Keywords|Key words|Index Terms)"
                r"|(?:关键词|Keywords|Key words|Index Terms)[ \t]*[:：])[^\n]*$", "", t, flags=re.M)   # keyword lines without \noindent (Markdown, plain text)
-    t = re.sub(r"〔[^〕]*〕", " ", t)                              # template placeholders
+    t = re.sub(r"〔[^〕]*〕|\[FACT NEEDED:[^\]]*\]", " ", t)       # placeholders: template slots, facts the author owes
     t = re.sub(r"\\begin\{(%s)\}.*?\\end\{\1\}" % MATH_ENVS, keep_lines, t, flags=re.S)
     t = re.sub(r"\$\$.*?\$\$", keep_lines, t, flags=re.S)
-    t = re.sub(r"\$[^$]*\$", " ", t)
+    t = re.sub(r"\$[^$]*\$", (lambda m: MARK_MATH + "\n" * m.group(0).count("\n")) if marks else " ", t)
     t = re.sub(r"\\\[.*?\\\]", keep_lines, t, flags=re.S)
+    if marks:
+        t = re.sub(r"\\(?:cite[pt]?|ref|eqref|autoref|cref|Cref)\*?(?:\[[^\]]*\])*\{[^}]*\}",
+                   lambda m: MARK_REF + "\n" * m.group(0).count("\n"), t)
     for name, n in STRUCTURAL_MACROS.items():
         t = strip_macro(t, name, n)
     t = re.sub(r"\\item\[[^\]]*\]", r"\\item", t)          # list labels such as \item[\textbf{A1}]
@@ -225,7 +261,41 @@ CONNECTIVES = ("moreover", "furthermore", "additionally", "in addition", "notabl
                "in particular", "in other words", "that is,", "to this end", "in this way")
 BANNED = ("it is worth noting", "plays a crucial role", "plays a pivotal role",
           "delve into", "leverage", "in this section, we will", "aims to")
-HEDGES = ("may ", "might ", "could potentially", "to some extent", "relatively ", "arguably")
+# 17: defensive writing (style-rules.md section 3). Hedges count against a per-section budget and never stack in
+# one sentence; the other kinds are out wherever they occur, except that disclaimers and scope caveats belong in the
+# limitations section and "to the best of our knowledge" is allowed once. Regular expressions over lower-cased prose.
+HEDGES = (r"\bmay\b", r"\bmight\b", r"\bpossibly\b", r"\bperhaps\b", r"\bpotentially\b", r"\bto (?:some|a certain) (?:extent|degree)\b",
+          r"\brelatively\b", r"\barguably\b", r"\bsomewhat\b", r"\bpresumably\b", r"\bconceivably\b", r"\bseemingly\b",
+          r"\b(?:appears?|seems?) to\b", r"\bwe (?:believe|feel|hope|suspect|speculate|think)\b")
+HEDGE_MODALS = r"\b(?:may|might|could)\b"
+HEDGE_SOFTENERS = (r"\b(?:possibly|perhaps|potentially|arguably|somewhat|presumably|conceivably|seemingly|to (?:some|a certain) (?:extent|degree)"
+                   r"|(?:appears?|seems?) to|we (?:believe|feel|hope|suspect|speculate|think))\b")
+NAMED = r"(?!,? (?:where|when|in which|for which|with|whose|that|of|such as|such that|like)\b)"   # "in cases where ..." names its condition
+DEFENSIVE = {
+    # undecidable qualifier: fine when the sentence also carries a number, a formula, a reference or an example
+    "vague qualifier": (r"\b(?:in|for) (?:some|certain|many|most|specific|particular) (?:cases|settings|scenarios|situations|circumstances|instances)\b" + NAMED,
+                        r"\bunder (?:some|certain|specific|particular|mild|suitable|appropriate|reasonable) (?:conditions|circumstances|settings|assumptions)\b" + NAMED,
+                        r"\bto a (?:large|great|limited) (?:extent|degree)\b", r"\bin (?:some|a certain) (?:sense|respects?|ways)\b"),
+    "meta-comment": (r"\bit (?:should|must|has to|needs to) be (?:noted|emphasi[sz]ed|stressed|pointed out|mentioned|clarified|remembered|recalled)\b",
+                     r"\bit is (?:worth|important to) (?:emphasi[sz]ing|mentioning|pointing out|stressing|emphasi[sz]e|stress|mention|point out|clarify)\b",
+                     r"\bwe (?:would like to|wish to|want to) (?:stress|emphasi[sz]e|point out|note|clarify|highlight|remind)\b",
+                     r"\bwe (?:stress|emphasi[sz]e|caution) (?:that|again)\b", r"\bneedless to say\b", r"\bit goes without saying\b",
+                     r"\bit bears (?:repeating|emphasi[sz]ing|mentioning)\b"),
+    "pre-emptive defence": (r"\b(?:one|some|readers?|reviewers?|critics?|skeptics?) (?:may|might|could|would) (?:argue|object|wonder|question|ask|think|suspect|contend)\b",
+                            r"\bit (?:could|can|may|might) be (?:argued|objected|questioned|claimed) that\b",
+                            r"\ba (?:skeptical|sceptical|careful|critical) reader\b", r"\badmittedly\b",
+                            r"^(?:of course|granted|to be fair|in fairness),", r"\bwhile (?:it is|this is) true that\b"),
+    "disclaimer": (r"\bwe (?:do not|don't|did not|cannot|can't|make no|are not) (?:claim|argue|suggest|intend|guarantee|assert|purport|pretend)",
+                   r"\b(?:this|that|it|these results?|our results?|the results?|our findings?) (?:does not|do not|doesn't|don't) (?:mean|suggest|say|indicate) that\b",
+                   r"\bthis is not to say\b", r"\b(?:is|are) not (?:intended|meant) (?:to|as)\b", r"\bno claim is made\b",
+                   r"\bwe (?:acknowledge|admit|concede) that\b"),
+    "scope caveat": (r"\b(?:beyond|outside) the scope of (?:this|the present|our|the current) (?:paper|work|study|article|manuscript)\b",
+                     r"\b(?:leave|leaves|left|leaving)\b[^.]{0,60}?\b(?:for|to) future (?:work|research|studies|investigation)\b",
+                     r"\bfuture (?:work|research|studies) (?:will|could|may|might|should|can)\b", r"\b(?:is|are) (?:left|reserved) for future\b"),
+    "apology or excuse": (r"\b(?:due|owing) to (?:the )?(?:space|page|time|length) (?:limitations?|limits?|constraints?|restrictions?)\b",
+                          r"\bunfortunately\b", r"\bregrettably\b", r"\bwe apologi[sz]e\b"),
+    "novelty hedge": (r"\bto the best of (?:our|the authors'?) knowledge\b", r"\bas far as we (?:know|are aware)\b"),
+}
 INTENSIFIERS = ("significantly", "substantially", "remarkably", "effectively", "seamlessly",
                 "comprehensively", "robustly", "dramatically", "greatly", "highly")
 GENERIC_VERBS = ("facilitate", "enable", "ensure", "enhance", "demonstrate", "exhibit", "achieve", "utilize")
@@ -303,7 +373,40 @@ ZH_ROADMAP_OPENERS = ("本文其余部分", "本节其余部分", "本文的组�
 # "值得注意的是" and "综上所述" are banned outright (item 16), so they do not also count against the budget of item 15
 ZH_CONNECTIVES = ("此外", "而且", "另外", "首先", "其次", "最后", "总之", "与此同时")
 ZH_BANNED = ("值得注意的是", "综上所述", "旨在", "本文所提出的")
-ZH_HEDGES = ("可能", "或许", "在一定程度上", "某种程度上")
+ZH_HEDGES = (r"在?一定程度上", r"某种(?:程度|意义)上", r"或许", r"也许", r"大概(?!率)", r"似乎", r"或多或少",
+             r"(?<![尽不])(?<!所有)(?<!一切)(?<!各种)(?<!任何)(?<!全部)(?<!每个)(?<!每种)可能(?![性解值])",   # 尽可能、不可能、所有可能的解 are not hedges
+             r"(?:我们|笔者)(?:相信|猜测|推测)")
+ZH_DEFENSIVE = {
+    "vague qualifier": (r"在?(?:某些|一些|部分|特定|大多数|多数|很多|许多|一定)(?:情况|情形|场景|条件|场合)(?:下|中)",
+                        r"在?(?:适当|合适|温和|合理)的?(?:条件|假设)(?:下|中)"),
+    "meta-comment": (r"需要(?:指出|说明|强调|注意)的是", r"(?:必须|应当|应该|有必要)(?:指出|强调|说明)", r"值得(?:一提|强调|指出|说明)的是",
+                     r"不言而喻", r"毋庸(?:赘言|讳言)"),
+    "pre-emptive defence": (r"诚然", r"不可否认", r"固然", r"(?:有人|读者|审稿人|批评者)(?:可能|或许|也许)?会(?:认为|质疑|问|怀疑|担心|指出)",
+                            r"(?:可能|或许|也许)有人会", r"^当然[，,]", r"(?<=[，；])当然[，,]"),
+    "disclaimer": (r"(?:本文|我们|笔者|本研究)并?(?:不|没有|无意)(?:声称|主张|宣称|保证|试图|意在|打算)",
+                   r"(?:这|此|上述结果|该结果|这一结果)并?不(?:意味着|代表|表示|是说)", r"并不是说", r"并非(?:要|意在|声称)",
+                   r"(?:我们|本文|笔者)(?:也)?(?:承认|坦承)"),
+    "scope caveat": (r"超出(?:了)?本(?:文|研究)(?:的)?(?:研究|讨论)?范围", r"不在本(?:文|研究)(?:的)?(?:研究|讨论)?范围", r"留待(?:今后|未来|后续|以后|将来)",
+                     r"有待(?:今后|未来|后续|进一步)(?:的)?(?:研究|工作|探索)", r"(?:未来|今后|后续)(?:的)?工作(?:中)?(?:将|可以|会|可|拟)"),
+    "apology or excuse": (r"(?:限于|受限于|囿于)(?:篇幅|精力)", r"(?:限于|受限于|囿于|由于|鉴于)时间(?:所限|有限|关系)",
+                          r"(?:由于|鉴于)(?:篇幅|精力)(?:所限|有限|限制|关系)", r"遗憾的是", r"不幸的是"),
+    "novelty hedge": (r"据(?:我们|笔者|作者)所知", r"就(?:我们|笔者)所知"),
+}
+DEFENSIVE_ADVICE = {
+    "vague qualifier": "with no number, formula, reference or example in the sentence -- name the condition or leave [FACT NEEDED]",
+    "meta-comment": "-- state the point itself",
+    "pre-emptive defence": "-- give the evidence directly; a real weakness goes to the limitations section",
+    "disclaimer": "outside the limitations section -- state the boundary there as a checkable condition, or delete it",
+    "scope caveat": "outside the limitations section -- collect boundaries and future work in one place",
+    "apology or excuse": "-- drop the excuse, keep the pointer",
+    "novelty hedge": "-- keep it once, next to the priority claim it qualifies",
+}
+# where disclaimers and scope caveats belong: a section, subsection or \paragraph{} run-in heading with such a title
+# (or a file named that way); the abstract is where a novelty hedge may repeat the one in the body
+LIMIT_TITLE = re.compile(r"limit|conclu|discuss|future|threat|outlook|scope|局限|不足|结论|讨论|展望|未来|研究边界|适用范围", re.I)
+ABSTRACT_TITLE = re.compile(r"abstract|摘\s*要", re.I)
+# what makes a qualifier decidable: a number, inline math, a citation or cross-reference, an appendix, an example
+ANCHOR = re.compile("\\d|\u27e6[mr]\u27e7|\\bappendix\\b|\\btable [ivxl]+\\b|\\be\\.g\\.|\\bfor example\\b|\\bsuch as\\b|附录|例如|比如", re.I)
 ZH_INTENSIFIERS = ("显著地", "有效地", "极大地", "大幅", "充分地", "全面地")
 ZH_GENERIC_VERBS = ("实现了", "有助于", "促进了", "提升了")
 ZH_ABSTRACT_NOUNS = ("框架", "范式", "策略", "模块", "体系")
@@ -380,10 +483,13 @@ def plain_to_texish(text: str) -> str:
 
 
 def run_style_checks(sources, style_sources=None, zh: bool = False, baseline=None, root=None,
-                     abstract_text=None, method_name: str | None = None):
+                     abstract_text=None, method_name: str | None = None, genre: str = "paper"):
     """Items 14-27 and 30-33 over `sources` (whole text: acronym budget, abstract) and `style_sources`
     (per-file items; defaults to `sources`). Returns (problems, notes). `root` is where the
-    reverse outline is written. `abstract_text` lets check.py pass the abstract it already parsed."""
+    reverse outline is written. `abstract_text` lets check.py pass the abstract it already parsed.
+    `genre` is paper, rebuttal or letter: in a response letter or a cover letter the concessions,
+    clarifications and courtesy phrases of item 17 are reported as notes, and scope statements are
+    not checked (answering a reviewer about scope is what such a letter is for)."""
     ZH = zh
     SOURCES = [Path(s) for s in sources]
     STYLE_SOURCES = [Path(s) for s in style_sources] if style_sources is not None else SOURCES
@@ -392,6 +498,7 @@ def run_style_checks(sources, style_sources=None, zh: bool = False, baseline=Non
     notes: list[str] = []
     TH = load_thresholds(baseline, notes)
     outline: list[str] = []
+    novelty_hits: list[str] = []
 
     def read_src(p: Path) -> str:
         t = p.read_text(encoding="utf-8")
@@ -409,6 +516,40 @@ def run_style_checks(sources, style_sources=None, zh: bool = False, baseline=Non
 
     def per_k(count: int, total: int) -> float:
         return 1000.0 * count / max(total, 1)
+
+
+    def sentence_spans(text: str) -> list[tuple[int, int, str]]:
+        """(first line, last line, sentence) for every sentence of `text`, line numbers 1-based."""
+        out, start = [], 0
+        for m in list(re.finditer(r"(?<=[。！？])" if ZH else r"(?<=[.!?])\s+", text)) + [None]:
+            end = m.start() if m else len(text)
+            seg = text[start:end]
+            lead = len(seg) - len(seg.lstrip())
+            if len(re.findall(r"\w", seg)) >= (6 if ZH else 3):
+                a = text.count("\n", 0, start + lead) + 1
+                out.append((a, a + seg.strip().count("\n"), " ".join(seg.split())))
+            start = m.end() if m else len(text)
+        return out
+
+
+    def heading_regions(src_text: str, title: re.Pattern, env: str | None = None) -> set[int]:
+        """Line numbers under a heading whose title matches `title` -- a section or subsection runs to the next
+        heading at its level or above, a \\paragraph{} run-in heading to the next blank line -- and, with `env`,
+        the lines of every \\begin{env} ... \\end{env}."""
+        out, active, depth = set(), {}, 0
+        for i, ln in enumerate(strip_comments(src_text).split("\n"), 1):
+            m = re.search(r"\\(section|subsection|subsubsection|paragraph)\*?\{([^}]*)\}", ln)
+            if m:
+                k = ("section", "subsection", "subsubsection", "paragraph").index(m.group(1))
+                active = {lv: hit for lv, hit in active.items() if lv < k}
+                active[k] = bool(title.search(m.group(2)))
+            elif not ln.strip():
+                active.pop(3, None)
+            depth += ln.count("\\begin{%s}" % env) if env else 0
+            if depth or any(active.values()):
+                out.add(i)
+            depth = max(0, depth - ln.count("\\end{%s}" % env)) if env else 0
+        return out
 
 
     for src in STYLE_SOURCES:
@@ -440,20 +581,63 @@ def run_style_checks(sources, style_sources=None, zh: bool = False, baseline=Non
             if phrase in low:
                 problems.append(f"{name}: banned phrase '{phrase}'")
 
-        # 17: hedging -- budget per section, and stacked hedges are out regardless
-        hedges = ZH_HEDGES if ZH else HEDGES
-        n_hedges = sum(low.count(h) for h in hedges)
-        if n_hedges > TH["hedges"]:
-            problems.append(f"{name}: {n_hedges} hedges (budget {TH['hedges']}) -- "
-                            f"narrow the claim and cite the number instead of softening it")
-        for s_ in sentences:
-            sl = s_.lower()
+        # 17: defensive writing -- hedges within budget per section and never stacked in one sentence; every
+        # qualifier decidable; no meta-comments, pre-emptive defences or excuses; disclaimers and scope caveats only
+        # in the limitations section; "to the best of our knowledge" once outside the abstract (counted after the loop)
+        marked = prose_of(raw, marks=True)
+        mlines = marked.split("\n")
+        hedge_re = "|".join(ZH_HEDGES if ZH else HEDGES)
+        heads = [(0, "")] + [(i, m.group(1).strip()) for i, ln in enumerate(strip_comments(raw).split("\n"))
+                             for m in [re.search(r"\\section\*?\{([^}]*)\}", ln)] if m]
+        for k, (i0, title) in enumerate(heads):
+            i1 = heads[k + 1][0] if k + 1 < len(heads) else len(mlines)
+            block = [ml for n, ml in enumerate(mlines[i0:i1], i0) if n >= len(raw_lines) or "style-exempt" not in raw_lines[n]]
+            n_hedges = len(re.findall(hedge_re, " ".join(" ".join(block).split()).lower()))
+            if n_hedges > TH["hedges"]:
+                problems.append(f"{name}: {n_hedges} hedges" + (f" in section '{title}'" if title else "") +
+                                f" (budget {TH['hedges']}) -- narrow the claim and cite the number instead of softening it")
+        everywhere = set(range(1, len(mlines) + 1))
+        stem = Path(name).stem
+        limits = everywhere if LIMIT_TITLE.search(stem) else heading_regions(raw, LIMIT_TITLE)
+        abstract = everywhere if ABSTRACT_TITLE.search(stem) else heading_regions(raw, ABSTRACT_TITLE, "abstract")
+        letter = genre in ("rebuttal", "letter")
+        for a, b, s_ in sentence_spans(marked):
+            if any("style-exempt" in raw_lines[n - 1] for n in range(a, min(b, len(raw_lines)) + 1)):
+                continue
+            sl = " ".join(s_.replace(MARK_MATH.strip(), " ").replace(MARK_REF.strip(), " ").split()).lower()
+            shown = " ".join(s_.replace(MARK_MATH.strip(), "$..$").replace(MARK_REF.strip(), "[..]").split())
             if ZH:
-                if len(re.findall(r"可能|或许|在一定程度上", sl)) >= 2:
-                    problems.append(f"{name}: stacked hedge in: {s_[:40]}")
-            elif re.search(r"\b(may|might|could)\b", sl) and \
-                 re.search(r"\b(potentially|possibly|perhaps|to some extent)\b", sl):
-                problems.append(f"{name}: stacked hedge in: {s_[:60]}")
+                stacked = len(re.findall(hedge_re, sl)) >= 2
+            else:
+                stacked = bool(re.search(HEDGE_MODALS, sl) and re.search(HEDGE_SOFTENERS, sl)) or len(re.findall(HEDGE_SOFTENERS, sl)) >= 2
+            if stacked:
+                problems.append(f"{name}:{a} stacked hedge in: {shown[:40 if ZH else 60]}")
+            for kind, pats in (ZH_DEFENSIVE if ZH else DEFENSIVE).items():
+                hit = next((m for m in (re.search(p, sl) for p in pats) if m), None)
+                if not hit:
+                    continue
+                phrase = hit.group(0).strip(" ,，")
+                what = f"{name}:{a} {kind} '{phrase}' {DEFENSIVE_ADVICE[kind]}"
+                if kind == "novelty hedge":
+                    if a not in abstract:
+                        novelty_hits.append((f"{name}:{a}", phrase))
+                elif kind == "vague qualifier":
+                    if not ANCHOR.search(s_):
+                        problems.append(what)
+                elif kind in ("disclaimer", "scope caveat"):
+                    if letter:                              # a response letter discusses scope with the reviewer
+                        continue
+                    if a in limits:
+                        notes.append(f"{name}:{a} {kind} '{phrase}' inside the limitations section -- "
+                                     f"fine when it names a checkable condition")
+                    elif len(heads) > 1:
+                        problems.append(what)
+                    else:
+                        notes.append(what + " (no section headings in this file: it goes to the limitations section)")
+                elif letter:
+                    notes.append(f"{name}:{a} {kind} '{phrase}' -- a {genre} may keep it as courtesy or concession, once per answer")
+                else:
+                    problems.append(what)
 
         # 19: colons inside a sentence (a colon that ends the line introduces a
         # display block, list or algorithm and is fine)
@@ -571,6 +755,12 @@ def run_style_checks(sources, style_sources=None, zh: bool = False, baseline=Non
             if len(keys) > TH["cluster"]:
                 problems.append(f"{name}: citation cluster of {len(keys)} keys -- give each work one "
                                 f"specific sentence or cite the survey")
+
+    # 17 (whole manuscript): "to the best of our knowledge" once in the body, next to the priority claim it qualifies
+    if len(novelty_hits) > 1 and genre == "paper":
+        problems.append(f"novelty hedge '{novelty_hits[0][1]}' {len(novelty_hits)} times outside the abstract "
+                        f"({', '.join(w for w, _ in novelty_hits[:4])}) -- keep it once, next to the priority claim it "
+                        f"qualifies; let the related-work comparison carry the others")
 
     # 18: naming budget -- acronyms and coined compound names (whole manuscript)
     whole = strip_comments("\n".join(read_src(p) for p in SOURCES))
@@ -798,11 +988,14 @@ if __name__ == "__main__":
     ap.add_argument("--baseline", type=Path, default=Path(__file__).resolve().parent / "style_baseline.json")
     ap.add_argument("--outline-dir", type=Path, default=None, help="where reverse-outline.md goes (default: first file's folder)")
     ap.add_argument("--method-name", default=None, help="the one CamelCase name allowed (the method's own name)")
+    ap.add_argument("--genre", choices=("paper", "rebuttal", "letter"), default="paper",
+                    help="rebuttal / letter: concessions and courtesy phrases are notes, scope statements are not checked")
     a = ap.parse_args()
     zh = a.zh or looks_chinese(a.files)
     problems, notes = run_style_checks(a.files, zh=zh, baseline=a.baseline,
-                                       root=a.outline_dir or a.files[0].resolve().parent, method_name=a.method_name)
-    print(f"files   : {len(a.files)}" + (" (zh)" if zh else ""))
+                                       root=a.outline_dir or a.files[0].resolve().parent, method_name=a.method_name,
+                                       genre=a.genre)
+    print(f"files   : {len(a.files)}" + (" (zh)" if zh else "") + ("" if a.genre == "paper" else f" ({a.genre})"))
     for n in notes:
         print(f"  note   {n}")
     for p in problems:
