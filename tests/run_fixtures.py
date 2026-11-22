@@ -6,8 +6,10 @@ paper-polish/references/stylecheck.md.
     python tests/run_fixtures.py --extract DIR   # only write stylecheck.py and style_baseline.py into DIR
 
 Planted fixtures must raise every listed finding, the listed number of FAILs, and none of
-the listed false alarms; clean fixtures must pass. Run it after every change to the
-scripts, once the new code is back in stylecheck.md. Exit code 1 on any mismatch.
+the listed false alarms; clean fixtures must pass. A key may carry command-line arguments
+after the file name ("en-rebuttal.md --genre rebuttal"), so one fixture can be checked
+under two genres. Run it after every change to the scripts, once the new code is back in
+stylecheck.md. Exit code 1 on any mismatch.
 """
 from __future__ import annotations
 
@@ -24,7 +26,7 @@ REPO = Path(__file__).resolve().parents[1]
 DOC = REPO / "paper-polish" / "references" / "stylecheck.md"
 FIX = Path(__file__).resolve().parent / "fixtures"
 
-# fixture -> (number of FAIL lines, patterns that must each match a line, patterns that must match none)
+# fixture [arguments] -> (number of FAIL lines, patterns that must each match a line, patterns that must match none)
 EXPECT = {
     "zh-planted.md": (6, [
         r"FAIL   prose semicolon at zh-planted\.md:15$",                   # the semicolon after a literal %
@@ -55,7 +57,7 @@ EXPECT = {
         r"FAIL   prose semicolon at en-planted\.tex:16$",
         r"FAIL .*3 sentence-initial connectives",
         r"FAIL .*banned phrase 'it is worth noting'",
-        r"FAIL .*5 hedges", r"FAIL .*stacked hedge",
+        r"FAIL .*6 hedges in section 'Method'", r"FAIL .*stacked hedge",
         r"FAIL   mid-sentence colon at en-planted\.tex:19$",
         r"FAIL   dash in prose at en-planted\.tex:20$",
         r"FAIL   bold inside running text at en-planted\.tex:21",
@@ -70,6 +72,51 @@ EXPECT = {
         r"note   CamelCase name \['GradSieve'\]",                           # HumanEval and HuggingFace are known names
     ], [r"self-made acronyms", r"roadmap paragraph"]),                     # BERT and RAG are standard acronyms
     "en-clean.tex": (0, [], [r"FAIL"]),                                    # \partial in the abstract is not \par
+    # item 17, defensive writing: every kind once, and the legitimate forms next to them
+    "en-defensive.tex": (12, [
+        r"FAIL   en-defensive\.tex: 3 hedges in section 'Experiments' \(budget 2\)",
+        r"FAIL   en-defensive\.tex:10 meta-comment 'it should be noted'",
+        r"FAIL   en-defensive\.tex:11 pre-emptive defence 'one might argue'",
+        r"FAIL   en-defensive\.tex:12 disclaimer 'we do not claim' outside the limitations section",
+        r"FAIL   en-defensive\.tex:13 apology or excuse 'due to space limitations'",
+        r"FAIL   en-defensive\.tex:17 vague qualifier 'in some cases'",
+        r"FAIL   en-defensive\.tex:20 stacked hedge in: The cost could potentially grow",
+        r"FAIL   en-defensive\.tex:21 pre-emptive defence 'admittedly'",
+        r"FAIL   en-defensive\.tex:22 scope caveat 'beyond the scope of this paper' outside",
+        r"FAIL   en-defensive\.tex:30 apology or excuse 'unfortunately'",
+        r"FAIL   en-defensive\.tex:31 scope caveat 'leave larger models to future work'",
+        r"FAIL   novelty hedge 'to the best of our knowledge' 2 times outside the abstract \(en-defensive\.tex:9, en-defensive\.tex:23\)",
+        r"note   en-defensive\.tex:34 disclaimer 'we do not claim' inside the limitations section",
+        r"note   en-defensive\.tex:35 scope caveat 'beyond the scope of this paper' inside the limitations section",
+    ], [r"en-defensive\.tex:(?:4|18|19|24|27|28)\b",                        # abstract, named condition, anchored, exempt, two hedges
+        r"FAIL .*en-defensive\.tex:3[45]\b"]),                              # the limitations section
+    "zh-defensive.md": (10, [
+        r"FAIL   zh-defensive\.md:9 meta-comment '需要指出的是'",
+        r"FAIL   zh-defensive\.md:9 pre-emptive defence '有人可能会认为'",
+        r"FAIL   zh-defensive\.md:9 disclaimer '本文并不声称' outside the limitations section",
+        r"FAIL   zh-defensive\.md:9 apology or excuse '限于篇幅'",
+        r"FAIL   zh-defensive\.md:13 vague qualifier '在某些情况下'",
+        r"FAIL   zh-defensive\.md:13 stacked hedge in: 该方法可能在一定程度上",
+        r"FAIL   zh-defensive\.md:13 pre-emptive defence '诚然'",
+        r"FAIL   zh-defensive\.md:13 scope caveat '超出了本文的研究范围'",
+        r"FAIL   zh-defensive\.md:17 apology or excuse '遗憾的是'",
+        r"FAIL   zh-defensive\.md:17 scope caveat '留待今后'",
+        r"note   zh-defensive\.md:23 disclaimer '本文并不声称' inside the limitations section",
+    ], [r"novelty hedge",                                                    # once in the abstract, once in the body
+        r"\d+ hedges",                                                       # 尽可能 and 所有可能的 are not hedges
+        r"zh-defensive\.md:(?:5|19)\b", r"FAIL .*zh-defensive\.md:23\b"]),   # abstract, exempt line, limitations
+    "en-rebuttal.md": (8, [                                                  # a response letter checked as a paper
+        r"FAIL   en-rebuttal\.md:7 meta-comment 'we would like to clarify'",
+        r"FAIL   en-rebuttal\.md:8 disclaimer 'we acknowledge that'",
+        r"FAIL   en-rebuttal\.md:9 scope caveat 'beyond the scope of this paper'",
+        r"FAIL   en-rebuttal\.md:16 apology or excuse 'we apologize'",
+    ], [r"en-rebuttal\.md:5\b", r"\d+ hedges"]),                             # the quoted reviewer comment is not prose
+    "en-rebuttal.md --genre rebuttal": (2, [
+        r"FAIL   en-rebuttal\.md:17 stacked hedge",
+        r"FAIL   en-rebuttal\.md:17 vague qualifier 'in some cases'",
+        r"note   en-rebuttal\.md:7 meta-comment 'we would like to clarify' -- a rebuttal may keep it",
+        r"note   en-rebuttal\.md:16 apology or excuse 'we apologize' -- a rebuttal may keep it",
+    ], [r"we acknowledge that", r"beyond the scope"]),                       # scope is what the letter is about
 }
 
 
@@ -102,8 +149,9 @@ def main() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
         check, baseline = extract(tmp / "scripts")
-        for name, (n_fail, must, never) in EXPECT.items():
-            r = subprocess.run([sys.executable, str(check), str(FIX / name), "--baseline", str(tmp / "none.json"),
+        for key, (n_fail, must, never) in EXPECT.items():
+            name, *extra = key.split()
+            r = subprocess.run([sys.executable, str(check), str(FIX / name), *extra, "--baseline", str(tmp / "none.json"),
                                 "--outline-dir", str(tmp / "outline")], capture_output=True, text=True)
             lines = (r.stdout + r.stderr).splitlines()
             fails = [ln for ln in lines if ln.startswith("  FAIL")]
@@ -114,7 +162,7 @@ def main() -> int:
                 errs.append(f"exit code {r.returncode}")
             errs += [f"missing: {p}" for p in must if not any(re.search(p, ln) for ln in lines)]
             errs += [f"false alarm: {p}" for p in never if any(re.search(p, ln) for ln in lines)]
-            print(f"{'ok  ' if not errs else 'FAIL'}  {name}: {len(fails)} FAIL lines" + "".join(f"\n        {e}" for e in errs))
+            print(f"{'ok  ' if not errs else 'FAIL'}  {key}: {len(fails)} FAIL lines" + "".join(f"\n        {e}" for e in errs))
             if errs:
                 print("\n".join("        | " + ln for ln in lines))
             bad += bool(errs)

@@ -134,21 +134,50 @@ and $\pi$ remains a distribution on the feasible set under the mask, so $g$ is u
 \end{proof}
 ```
 
-## 3. 反防御性写作（与 AI 痕迹并列的第二类文体病）
+## 3. 反防御性写作（17，与 AI 痕迹并列的第二类文体病）
 
-防御性写作 = 为预防审稿人挑刺而堆砌的对冲、免责与过度限定；顶刊的实际文风是**论断干净、边界集中
-声明**。五条纪律（17）：
+防御性写作 = 为预防审稿人挑刺而堆砌的对冲、免责、预先辩护与过度限定。每句单看都"稳妥"，合起来论断
+发软、边界散落全文，审稿人读到的是作者自己没把握。顶刊的实际文风是**论断干净、边界集中声明**。五条纪律：
 
-1. 每个结论句**至多一个限定词**，禁止双重对冲（"may potentially""可能在某些情况下或许"）。
+1. 每个结论句**至多一个限定词**，禁止双重对冲（"may potentially""可能在一定程度上"）。
 2. 限定必须**可判定**——"on instances up to $n=100$"合规，"in some cases / 在某些情况下"不合规。
-3. 禁止无信息免责句（删掉后论文没有任何损失的句子一律删）。
-4. **修复过度声称的唯一正确动作是收窄到证据边界并给出数字，禁止用软化词修复**。润色时本技能只标出
-   过度声称处并留待补事实占位，收窄由作者决定。
-5. 结论句写干净，适用边界统一进 limitations 节（引用研究边界表），不在每个结论后重复挂限定尾巴。
+3. 禁止无信息句：元评论（"It should be noted that"）、假想反方（"One might argue"）、道歉与借口
+   （"Due to space limitations"）删掉后论文没有任何损失。删引导语，留下句中的事实与指向。
+4. **修复过度声称的唯一正确动作是收窄到证据边界并给出数字，禁止用软化词修复**。反过来，删掉一个没有
+   证据支撑的对冲等于加强 claim，同样不能由润色代劳。两类句子本技能只标出并留待补事实占位，收窄与加强
+   由作者决定。
+5. 结论句写干净，适用边界、免责与后续工作统一进 limitations 节（引用研究边界表），不在每个结论后重复
+   挂限定尾巴；"据我们所知"在摘要之外只用一次，挂在那一条优先权声明上。
 
-hedge 检测词表：may / might / could potentially / to some extent / relatively / arguably / 可能 / 或许 /
-在一定程度上——每节 >2 即回改。界限：统计不确定性与明确适用条件是**合法限定**，本条款禁的是模糊、
-堆叠、无判定条件的对冲。
+### 3.1 九种形态、机检与改法
+
+括号里是 `stylecheck.py` 项 17 报告里的名字，改动清单的"规则"列写成"17（元评论）"这样。
+
+| 形态 | 例（英 / 中） | 判定 | 改法 |
+|---|---|---|---|
+| 对冲超预算（`N hedges in section '…'`） | may、might、possibly、perhaps、potentially、to some extent、relatively、arguably、somewhat、seems to、we believe；可能、或许、也许、大概、似乎、在一定程度上、我们相信 | 每节（`\section`）>2 即 FAIL | 有证据的换成数字与出处；没有证据的保留并交作者 |
+| 对冲堆叠（`stacked hedge`） | may potentially、could possibly、we believe … may；可能在一定程度上 | 同一句两个即 FAIL，不看预算 | 只留一个，优先留可判定的那个 |
+| 不可判定的限定（`vague qualifier`） | in some cases、in many settings、under certain conditions、under mild assumptions、to a large extent、in some sense；在某些情况下、在一定条件下、在适当条件下 | 同一句里没有数字、公式、引用、交叉引用、附录或例子即 FAIL；"in some cases where …"当场点名条件的不报 | 写出条件（规模、参数范围、表号、假设编号）；原文与附带材料都没有就留待补事实 |
+| 元评论（`meta-comment`） | It should be noted that、We would like to stress、It is worth mentioning、Needless to say；需要指出的是、必须强调、值得一提的是、不言而喻 | FAIL | 删引导语，直接陈述 |
+| 预先辩护（`pre-emptive defence`） | One might argue、It could be argued that、Admittedly、句首的 Of course、While it is true that；有人可能会认为、诚然、不可否认、固然、句首的"当然，" | FAIL | 删假想反方，证据句直接陈述；没有证据的真弱点交作者，由作者决定补证据还是写进局限节 |
+| 局限节外的免责（`disclaimer`） | We do not claim、This does not mean that、is not intended to、We acknowledge that；本文并不声称、这并不意味着、并非要、我们承认 | 局限节外 FAIL，节内 note | 整句迁入局限节，能写成可判定条件就写；无信息的删 |
+| 局限节外的范围声明与后续工作（`scope caveat`） | beyond the scope of this paper、We leave X to future work、Future work will；超出本文的研究范围、留待今后研究、未来工作将 | 局限节外 FAIL，节内 note | 整句迁入局限节或结论末段 |
+| 道歉与借口（`apology or excuse`） | Due to space limitations、Unfortunately、Regrettably、We apologize；限于篇幅、由于时间所限、遗憾的是 | FAIL | 删借口，留指向（"证明见附录 B"）与事实 |
+| 新颖性对冲重复（`novelty hedge … times outside the abstract`） | to the best of our knowledge、as far as we know；据我们所知 | 摘要之外出现两次及以上即 FAIL（全稿合计） | 留挂着主要优先权声明的那一处；重复同一声明的删重复句，另一条声明交作者 |
+
+**局限节怎么认**：标题含 Limitations / Discussion / Conclusion / Future work / Threats to validity / Outlook /
+Scope，或含"局限、不足、结论、讨论、展望、未来、研究边界、适用范围"的节、小节与 `\paragraph{}` 引导段（引导段
+到空行为止）；文件名含这些词时整个文件都算。没有任何节标题的片段（粘贴的一段话）只给 note，定稿时再放进局限节。
+摘要按 `abstract` 环境、标题为 Abstract 或"摘要"的节、文件名认。
+
+**合法限定**（不改；机检误报时在该行加 `% style-exempt`）：带数字的统计不确定性（置信区间、标准差、
+"$p<0.01$"）；明确的适用条件（"on instances up to $n=100$""当 $\tau \ge 0.1$ 时"）；引用的他人原文与审稿意见；
+问题定义里表示"允许"的 may（"each operation may be processed on any eligible machine"，能改成 can 就改，
+含义不变），数学里的 "possibly non-convex" 同理。
+
+**回复信与 cover letter**（`--genre rebuttal` / `--genre letter`）：致谢、"We would like to clarify"、让步与
+道歉是体裁礼节，降为 note，每条回答至多各一处；范围与免责本来就是回复信要谈的内容，不查。对冲预算、堆叠与
+不可判定的限定照常 FAIL：回复信最需要可判定的答复。
 
 ## 3.5 脚手架（33）
 
@@ -181,9 +210,10 @@ hedge 检测词表：may / might / could potentially / to some extent / relative
 
 - **论文正文、摘要、研究方案**：全部条款。
 - **rebuttal 回复信**：礼节句式、编号冒号与加粗定位是体裁结构，不受标点与强调条款约束；命名与缩写
-  纪律、禁用词、对冲、节奏同样适用；回复信沿用稿件已定义的机制名与缩写，不另起新名。
+  纪律、禁用词、对冲、节奏同样适用；回复信沿用稿件已定义的机制名与缩写，不另起新名。机检加
+  `--genre rebuttal`：项 17 的礼节、让步与道歉句降为 note，范围与免责声明不查（§3.1）。
 - **cover letter**：首末段礼节句豁免标点与加粗条款；期刊名用斜体宏（不计入 `\emph` 预算）；其余与正文
-  同标准——句长有长有短、无 novel/significantly、无句中冒号与破折号。
+  同标准——句长有长有短、无 novel/significantly、无句中冒号与破折号。机检加 `--genre letter`，项 17 同上。
 - **中文文本**：标点与词表自动切换——正文不用"——"与句中"："，引号与汉字旁的逗号、分号、冒号用全角（31），
   连接词与对冲按中文词表，不造"××感知/××驱动/××增强"式新词；段首引导词用 `\paragraph{}` 而非 `\textbf{状态。}`。空话与生僻词
   （赋能、抓手、底层逻辑、闭环、颗粒度、擘画、彰显、凸显、阐释、诠释、赋予、不可或缺、举足轻重、行之有效、
