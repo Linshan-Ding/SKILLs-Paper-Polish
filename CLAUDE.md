@@ -21,4 +21,4 @@
 - 改 `stylecheck.py` 或 `style_baseline.py`：先在工作副本上改，回填进 `stylecheck.md`，再跑
   `python tests/run_fixtures.py`（从文档抽出脚本，在 `tests/fixtures/` 的埋错样例与干净样例上核对命中与误报）。
   新增检查时给埋错样例加一处、给期望表加一行；`tests/` 不属于技能目录，不随技能安装。
-- 改动在 `claude/*` 分支上提交并推送，经 PR 合入 `main`。
+- 改动在 `claude/*` 分支上提交并推送，验证通过后由助手自己建 PR 并合并进 `main`，不留给用户手动拉取合并（用户定的约定）。

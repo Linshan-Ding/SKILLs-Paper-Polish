@@ -9,6 +9,9 @@ accuracy rises by 2.1 points on three benchmarks (Table 2).
 \section{Method}
 The filter keeps sample $i$ when its cosine with the reference gradient is at least $\tau$. The reference
 gradient comes from 64 verified samples. It is recomputed every 50 steps, which costs one extra backward pass.
+\Cref{fig:conv,tab:main} report the effect. The background is in \citep[see][Sec.~2]{DBLP:conf/nips/Vaswani17}, the update rule in
+\autoref{eq:mask}, and the bound that links the threshold $\tau$ to the descent of the reference loss in
+\hyperref[app:proofs]{Appendix B}, which also lists the 3 constants used in the proof.
 
 \noindent\textbf{Keywords:} noisy supervision, gradient alignment
 
