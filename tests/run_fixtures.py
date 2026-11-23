@@ -71,7 +71,8 @@ EXPECT = {
         r"note .*obscure word\(s\) \['myriad -> many'\]",                  # one phrase, one hit
         r"note   CamelCase name \['GradSieve'\]",                           # HumanEval and HuggingFace are known names
     ], [r"self-made acronyms", r"roadmap paragraph"]),                     # BERT and RAG are standard acronyms
-    "en-clean.tex": (0, [], [r"FAIL"]),                                    # \partial in the abstract is not \par
+    "en-clean.tex": (0, [], [r"FAIL"]),                                    # \partial in the abstract is not \par; the colons in
+                                                                           # \Cref{fig:conv,...} and \citep[..][..]{DBLP:conf/...} are not prose
     # item 17, defensive writing: every kind once, and the legitimate forms next to them
     "en-defensive.tex": (12, [
         r"FAIL   en-defensive\.tex: 3 hedges in section 'Experiments' \(budget 2\)",

@@ -20,6 +20,10 @@ python stylecheck.py response.md --genre rebuttal         # 回复信（cover le
 python style_baseline.py --corpus ~/venue-papers          # 2–3 篇目标刊物论文（.tex/.txt）→ style_baseline.json
 ```
 
+引用与交叉引用命令的参数不算正文：`\cite` 一族（`\citep[see][p.~3]{...}`、`\citeauthor`、biblatex 的 `\parencite` 等）、
+`\ref` / `\eqref` / `\autoref` / `\cref` / `\Cref` / `\crefrange` / `\pageref`、`\hyperref[标签]{文字}` 的标签。标签与文献键里
+的冒号（`fig:conv`、`DBLP:conf/...`）不会被当成句中冒号。
+
 退出码：有 FAIL 为 1。合法例外在该行加 `% style-exempt` 注释，Markdown 里写 `<!-- style-exempt -->`（数学与
 伪代码里的分号冒号、引用他人原文、术语首次定义的强调、必须保留的符号）。待补事实占位（`〔待补事实：…〕`、
 `[FACT NEEDED: …]`）不算正文。
@@ -194,13 +198,17 @@ MARK_MATH, MARK_REF = " \u27e6m\u27e7 ", " \u27e6r\u27e7 "      # what prose_of(
 MATH_ENVS = r"(?:equation|align|gather|multline|eqnarray|algorithmic|tabular|tabularx|thebibliography|center|titlepage)\*?"
 # Macros whose argument is structural text (captions, placeholders, notes), not running prose.
 STRUCTURAL_MACROS = {"caption": 1, "figplace": 4, "draftnote": 1, "label": 1, "includegraphics": 1,
-                     "input": 1, "bibliography": 1, "cite": 1, "citep": 1, "citet": 1,
-                     "ref": 1, "eqref": 1, "texttt": 1, "url": 1}
+                     "input": 1, "bibliography": 1, "texttt": 1, "url": 1,
+                     # citations and cross-references: their keys and labels (fig:x, DBLP:conf/...) are not prose
+                     "cite": 1, "citep": 1, "citet": 1, "citealp": 1, "citealt": 1, "citeauthor": 1, "citeyear": 1,
+                     "citeyearpar": 1, "nocite": 1, "parencite": 1, "textcite": 1, "autocite": 1, "footcite": 1,
+                     "ref": 1, "eqref": 1, "autoref": 1, "pageref": 1, "nameref": 1, "subref": 1,
+                     "cref": 1, "Cref": 1, "crefrange": 2, "Crefrange": 2}
 
 
 def strip_macro(t: str, name: str, nargs: int) -> str:
     """Remove \\name{...}{...} with balanced braces, keeping newlines for line numbers."""
-    out, i, pat = [], 0, re.compile(r"\\" + name + r"\*?(?:\[[^\]]*\])?\s*\{")
+    out, i, pat = [], 0, re.compile(r"\\" + name + r"\*?(?:\[[^\]]*\])*\s*\{")      # \citep[see][p.~3]{key}: any number of optional arguments
     while True:
         m = pat.search(t, i)
         if not m:
@@ -244,8 +252,9 @@ def prose_of(text: str, marks: bool = False) -> str:
     t = re.sub(r"\$[^$]*\$", (lambda m: MARK_MATH + "\n" * m.group(0).count("\n")) if marks else " ", t)
     t = re.sub(r"\\\[.*?\\\]", keep_lines, t, flags=re.S)
     if marks:
-        t = re.sub(r"\\(?:cite[pt]?|ref|eqref|autoref|cref|Cref)\*?(?:\[[^\]]*\])*\{[^}]*\}",
+        t = re.sub(r"\\(?:(?:cite|parencite|textcite|autocite|footcite)[a-zA-Z]*|(?:eq|auto|page|name|sub|c|C)?ref)\*?(?:\[[^\]]*\])*\{[^}]*\}",
                    lambda m: MARK_REF + "\n" * m.group(0).count("\n"), t)
+    t = re.sub(r"\\hyperref\[[^\]]*\]", " ", t)              # \hyperref[sec:x]{Section 2}: the label goes, the text stays
     for name, n in STRUCTURAL_MACROS.items():
         t = strip_macro(t, name, n)
     t = re.sub(r"\\item\[[^\]]*\]", r"\\item", t)          # list labels such as \item[\textbf{A1}]
