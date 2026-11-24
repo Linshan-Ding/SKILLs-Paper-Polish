@@ -29,7 +29,7 @@ description: >-
 1. **选模式**（用户没说就按下表的触发词判断；拿不准先做体检，报告里给出建议模式）。
 2. **校准阈值**：用户能给目标刊物 2–3 篇已发表论文时，先跑 `style_baseline.py` 生成
    `style_baseline.json`；有作者自己的旧稿时同法提取作者基线——稿件向作者靠，不向通用学术腔靠。
-3. **执行**：先跑 `stylecheck.py` 拿到基线报告，再按模式改；改完复跑，直到零 FAIL（项 17 里要作者决定
+3. **执行**：先跑 `stylecheck.py`（带 `--outline-dir <交付目录>`，反向大纲写到那里）拿到基线报告，再按模式改；改完复跑，直到零 FAIL（项 17 里要作者决定
    加强或收窄 claim 的句子除外，列进交作者清单）。机检的"paragraph with nothing concrete"只查方法、实验与
    问题节，深度模式把其余各节的段落也逐段过一遍具体性。
 4. **交付**：改后文本 + 改动清单（每条标规则编号）+ 机检前后对比 + 待补事实清单 + 未改之处与理由。
@@ -97,14 +97,17 @@ python stylecheck.py draft.md                       # Markdown / 纯文本（标
 python stylecheck.py paper/zh-draft.tex --zh        # 中文（CJK 占比超过三成时自动识别）
 python stylecheck.py sections/*.tex --baseline style_baseline.json
 python stylecheck.py response.md --genre rebuttal   # 回复信；cover letter 用 --genre letter
+python stylecheck.py sections/*.tex --display-style cited   # 带编号公式按引用式体例检查（项 32）
+python stylecheck.py sections/*.tex --outline-dir notes     # 把反向大纲写进 notes/（不给就只报段数，不写文件）
 ```
 
 18 项：14 散文分号 / 15 句首连接词与提示词 / 16 禁用词 / 17 防御性写作（对冲预算与堆叠、不可判定的限定、元评论、
 预先辩护、道歉与借口、局限节外的免责与范围声明、摘要外重复的"据我们所知"）/ 18 命名与缩写预算 / 19 句中
 冒号 / 20 破折号 / 21 句中强调与 `\paragraph` 预算 / 22 摘要单段 / 23 句长节奏与三连排比 / 24 强化词、
-泛动词、抽象名词密度 / 25 段落具体性与段尾小结 / 26 簇引用 / 27 反向大纲 / 30 生僻词 / 31 符号与连字符
-（正文与表头的箭头与运算符、连字符链与前缀连字符、CamelCase 自造名、中文正文的直引号与半角标点）/ 32 证明与
-推导排版 / 33 脚手架（枚举标签、总结与路线图段、括号密度、正文列表）。`--method-name` 声明唯一允许的 CamelCase
+泛动词、抽象名词密度 / 25 段落具体性与段尾小结 / 26 簇引用 / 27 反向大纲 / 30 词汇语域（生僻词与口语词两头）/
+31 符号与连字符（正文与表头的箭头与运算符、连字符链与前缀连字符、CamelCase 自造名、中文正文的直引号与半角标点）/
+32 证明与推导排版（`--display-style cited` 时加查带编号公式的引用式体例）/ 33 脚手架（枚举标签、总结与路线图段、
+括号密度、正文列表）。`--method-name` 声明唯一允许的 CamelCase
 方法名；`--baseline` 让目标刊物语料用过的词与连字符拼法放行。合法例外在该行加 `% style-exempt`，Markdown 里写
 `<!-- style-exempt -->`（数学与伪代码里的分号冒号、引用他人原文、术语首次定义的强调）。Markdown 的标题按节处理，
 所以项 22、25、33 对 `.md` 同样生效；表格、`>` 引用块、代码与 HTML 注释不计入正文。项号与家族仓库的 `check.py`

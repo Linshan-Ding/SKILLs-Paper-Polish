@@ -77,6 +77,18 @@
   similar to；wherein → where；whereby → by which；thereof / therein / hereinafter → 改写；aforementioned →
   these；burgeoning → growing；ubiquitous → common；seminal → early；immense / vast → large。判据不是
   "词难不难"，而是目标刊物的论文用不用：拿不准就查语料，语料用的词即使在表里也保留。
+- **语域下限：平实不等于口语**（30，同一项的另一头）。把生僻词换成平实词以后，稿件容易滑到口语一侧，SCI 论文
+  用的是书面形式。替换表（左 → 右；机检逐词报出，每个文件超过 2 处即 FAIL，目标刊物语料用过两次以上的词放行）：
+  a lot of / lots of / plenty of → many、much；a bit → slightly；a couple of → two、a few；kind of / sort of → 删
+  或写出是哪一种；really → 删；big / huge → large；tired → fatigued；get / got → obtain、become；thing / stuff →
+  写出所指；nowadays → currently；cheap → inexpensive、less costly；pick → select；figure out / find out →
+  determine；come up with → devise；look at / look into → examine；make sure → ensure、verify；go up / go down →
+  increase / decrease；end up → result in；more and more → increasingly；and so on → 列全或删；about / around
+  加数字 → approximately；缩约形式（don't、it's、we've）一律写开；句首的 So / Plus 改 therefore / in addition。
+  用 ", so" 连接的因果分句每千词不超过 3 处（note），多出来的改成 and therefore、hence，或拆成两句。领域里本来
+  就这样叫的词不在表里：crew、shop、people 在调度与人因论文里是术语。中文同理：好多、一大堆、搞清、搞定、
+  弄清、差不多、没法、说白了。**程序里的名字不是论文术语**：结果文件的列名、配置键、变量名（`paid_gap`、
+  `no_direct`）先译成论文术语再进正文，对照表由写稿技能维护并机检。
 - **符号与连字符纪律**（31）：
   - 正文散文与表头**不用箭头和运算符代替词语**：`A → B`、`$\to$`、`↑`/`↓`、`3×`、`+2.1%`、`≈`、`/` 表示
     "或"，都改成词（leads to、higher is better、three times faster、an increase of 2.1 points、about）。
@@ -133,6 +145,39 @@ By the log-derivative trick,
 and $\pi$ remains a distribution on the feasible set under the mask, so $g$ is unbiased.
 \end{proof}
 ```
+
+### 带编号公式的两种排法
+
+显示公式与前后文字的关系有两种写法，一篇稿件只用一种：
+
+- **句内式**（数学类刊物与会议的惯例，机检默认）：公式是句子的一部分，按句子加标点，公式后可以用 where 接着写。
+  上面的分行式证明就是这种写法。
+- **引用式**（`stylecheck.py --display-style cited`；家族写稿技能生成的稿件用这一种，是用户定的稿件体例）：
+  带编号的公式**末尾不加标点**；公式前是一个**完整的句子，句末写出该公式的编号**；公式后**另起新句**，不用
+  where / with / and 接续。句中写 Eq.~(n)，句首写 Equation~(n)，多个写 Eqs.~(a) and~(b)，约束写
+  Constraints~(a) to~(b)。定义模型组件的长行内式改成编号公式再引用。不带编号的 `align*`（证明里的中间步）
+  不受这三条约束，行末的依据照旧。豁免：在 `\begin{equation}` 那一行加 `% style-exempt`。
+
+句内式 → 引用式（内容不变）：
+
+```latex
+% 句内式
+If worker $h$ starts the stage at time $t$, the stage lasts
+\begin{equation}\label{eq:duration}
+d = \big\lceil \bar{d}\,(1 + \kappa f_h(t)) \big\rceil,
+\end{equation}
+where $\kappa = 0.12$ and the duration is fixed when the stage starts.
+
+% 引用式
+When worker $h$ starts the stage at time $t$, the duration of the stage is given by Eq.~\eqref{eq:duration}.
+\begin{equation}\label{eq:duration}
+d = \big\lceil \bar{d}\,(1 + \kappa f_h(t)) \big\rceil
+\end{equation}
+The coefficient is $\kappa = 0.12$, and the duration remains fixed once the stage has started.
+```
+
+引用式下机检三件事（项 32）：编号公式的行末有 `,` `.` `;`；公式前的句子没有以句号结束或没有引用该公式的标签；
+公式后的文字以小写词开头。"每个编号公式都在正文被引用"由写稿技能的 `check.py` 第 2 项核对。
 
 ## 3. 反防御性写作（17，与 AI 痕迹并列的第二类文体病）
 

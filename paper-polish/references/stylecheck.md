@@ -15,7 +15,8 @@ python stylecheck.py paper/zh-draft.tex --zh              # 中文；不加 --zh
 python stylecheck.py draft.md notes.txt                   # Markdown / 纯文本：标题按节处理，表格、注释、引用块与代码不计入正文
 python stylecheck.py sections/*.tex --baseline style_baseline.json
 python stylecheck.py sections/*.tex --method-name FeasiSched   # 唯一允许的 CamelCase 自造名（方法总名）
-python stylecheck.py sections/*.tex --outline-dir paper   # 反向大纲 reverse-outline.md 写到哪
+python stylecheck.py sections/*.tex --outline-dir notes   # 把反向大纲 reverse-outline.md 写进 notes/；不给就只报段数、不写文件
+python stylecheck.py sections/*.tex --display-style cited # 带编号公式按引用式体例检查（项 32）；默认 sentence（句内式）
 python stylecheck.py response.md --genre rebuttal         # 回复信（cover letter 用 --genre letter）：项 17 的礼节与让步句降为 note
 python style_baseline.py --corpus ~/venue-papers          # 2–3 篇目标刊物论文（.tex/.txt）→ style_baseline.json
 ```
@@ -78,17 +79,17 @@ perhaps、potentially、somewhat、seems / appears to、we believe 与"也许、
 | 17 | 防御性写作：对冲预算（按节）与堆叠、不可判定的限定、元评论、预先辩护、道歉与借口、局限节外的免责与范围声明、摘要外重复的新颖性对冲 | FAIL；局限节内的免责与范围声明 note；`--genre rebuttal/letter` 下礼节与让步句 note |
 | 18 | 命名与缩写预算、效果形容词造名、修饰词链 | FAIL / note |
 | 19 | 句中冒号 | FAIL |
-| 20 | 破折号插入语 | FAIL |
+| 20 | 破折号插入语（数字范围 `20--50` 与引用范围 `\eqref{a}--\eqref{b}` 不算） | FAIL |
 | 21 | 句中加粗与斜体、`\paragraph` 预算 | FAIL |
 | 22 | 摘要单段 | FAIL |
 | 23 | 句长变异系数、三连排比 | FAIL |
 | 24 | 强化副词、泛动词、抽象名词密度 | FAIL |
 | 25 | 段落具体性、段尾小结句 | FAIL |
 | 26 | 簇引用 | FAIL |
-| 27 | 反向大纲 | note（写出文件） |
-| 30 | 生僻词（表内词逐个报出并给替换；目标刊物语料用过的放行） | 每节 >2 FAIL，否则 note |
+| 27 | 反向大纲 | note（给了 `--outline-dir` 才写出文件；`run_style_checks(root=None)` 同样只报段数） |
+| 30 | 词汇语域的两头：生僻词，口语词与缩约形式（表内词逐个报出并给替换；目标刊物语料用过的放行）；", so" 分句密度 | 生僻词、口语词各自每个文件 >2 FAIL，否则 note；", so" 只给 note |
 | 31 | 正文与表头的箭头、运算符、`±` 误用、`~`；连字符链、前缀连字符、连字符密度；CamelCase 自造名；中文正文里包住汉字的 ASCII 直引号、汉字旁的半角 `, ; :` | 箭头/运算符/连字符链/多于一个 CamelCase 名/中文直引号 FAIL，其余 note |
-| 32 | 段落式证明（>120 词无 display）、证明内行内关系链、正文行内 ≥3 关系链、无依据的多行推导 | 前三者 FAIL，末者 note |
+| 32 | 段落式证明（>120 词无 display）、证明内行内关系链、正文行内 ≥3 关系链、无依据的多行推导；`--display-style cited` 时另查带编号公式：行末标点、公式前的句子未以句号结束或未引用该公式、公式后以小写词续写 | 无依据的多行推导 note，其余 FAIL |
 | 33 | 枚举标签组数、总结段与路线图段位置、括号与 i.e./e.g. 密度、正文列表数 | 前两者 FAIL，其余 note |
 
 ## 阈值（内置默认值；`style_baseline.json` 存在时按语料 ±20% 覆盖）
@@ -107,6 +108,8 @@ perhaps、potentially、somewhat、seems / appears to、we believe 与"也许、
 | `acronym_min_uses` | 10 | 方法总名之外的自造缩写最少使用次数 | 否 |
 | `self_acronyms` | 1 | 免费的自造缩写个数（方法总名） | 否 |
 | `obscure` | 2 | 每节生僻词命中数，超过即 FAIL | 词表随语料放行 |
+| `colloquial` | 2 | 每个文件口语词与缩约形式命中数，超过即 FAIL | 词表随语料放行 |
+| `so_clause_per_k` | 3.0 | ", so" 因果分句每千词上限（命中 ≥5 才判，note） | 否 |
 | `hyphen_per_k` | 25.0 | 连字符复合词每千词上限（note） | 拼法随语料放行 |
 | `paren_per_100` | 1.5 | 散文括号每百词上限（note） | 否 |
 | `ie_eg` | 4 | 每节 i.e./e.g./etc. 上限（note） | 否 |
@@ -116,7 +119,7 @@ perhaps、potentially、somewhat、seems / appears to、we believe 与"也许、
 | `camel_names` | 1 | 允许的 CamelCase 自造名个数（方法总名） | 否 |
 
 词表（英文连接词、禁用句式、对冲、防御性句式 `DEFENSIVE`、强化副词、泛动词、抽象名词、效果形容词、生僻词
-替换表、固定连字符短语、前缀实拼表、CamelCase 白名单、总结与路线图开头；中文对应表）在脚本顶部，按领域增删后把改动记进
+替换表、口语词替换表 `COLLOQUIAL`、固定连字符短语、前缀实拼表、CamelCase 白名单、总结与路线图开头；中文对应表）在脚本顶部，按领域增删后把改动记进
 交付说明。`style_baseline.json` 的 `vocabulary`（语料里出现 ≥2 次的词）与 `hyphenated`（语料里的连字符
 拼法）让项 30、31 按目标刊物的真实用法放行。缩写白名单 `COMMON_ACRONYMS` 收组合优化与机器学习两个方向的通用缩写，
 名单里的缩写不占自造缩写预算；`CAMEL_OK` 收常见工具、模型与数据集的 CamelCase 名。
@@ -124,8 +127,8 @@ perhaps、potentially、somewhat、seems / appears to、we believe 与"也许、
 ## 自测
 
 改脚本后先把新代码回填到本文件，再在仓库根运行 `python tests/run_fixtures.py`。它从本文件抽出两个脚本，在
-`tests/fixtures/` 的十个样例上核对：埋错样例每一项都命中、FAIL 条数相符、不该出现的误报没有出现，干净样例零 FAIL；
-回复信样例按论文与回复信两种体裁各跑一次；另跑一遍语料校准的往返。脚本里出现三个连续反引号会被它拦下（那会截断本文件的代码块）。
+`tests/fixtures/` 的十二个样例上核对：埋错样例每一项都命中、FAIL 条数相符、不该出现的误报没有出现，干净样例零 FAIL；
+回复信样例按论文与回复信两种体裁各跑一次；口语词样例带与不带 `--method-name` 各跑一次（引用范围不报破折号、产品名不算自造名）；公式样例按句内式与引用式各跑一次；另跑一遍语料校准的往返。脚本里出现三个连续反引号会被它拦下（那会截断本文件的代码块）。
 
 ## stylecheck.py
 
@@ -140,6 +143,8 @@ perhaps、potentially、somewhat、seems / appears to、we believe 与"也许、
     python stylecheck.py sections/*.tex --baseline style_baseline.json
     python stylecheck.py sections/*.tex --method-name FeasiSched   # the one CamelCase name that is allowed
     python stylecheck.py response.md --genre rebuttal    # response letters and cover letters (--genre letter)
+    python stylecheck.py sections/*.tex --display-style cited      # house style of numbered displays (item 32)
+    python stylecheck.py sections/*.tex --outline-dir notes        # write reverse-outline.md there (item 27)
 
 Items
  14. no semicolons survive in the running prose
@@ -151,20 +156,24 @@ Items
      knowledge" at most once outside the abstract
  18. coined names and self-made acronyms stay within the naming budget
  19. no mid-sentence colon in the running prose
- 20. no dash used as a parenthetical in the running prose
+ 20. no dash used as a parenthetical in the running prose (a range of numbers or of references,
+     20--50 or \\eqref{a}--\\eqref{b}, is not a parenthetical)
  21. no bold or italic emphasis inside a sentence; run-in headings within budget
  22. the abstract is a single paragraph
  23. sentence length varies; triplet lists stay within budget
  24. intensifiers, generic verbs and abstract nouns stay within density limits
  25. every prose paragraph in method/experiment sections carries something concrete
  26. no citation cluster of more than four keys
- 27. a reverse outline (first sentence of every paragraph) is written for review
- 30. obscure vocabulary where the field uses a plain word
+ 27. a reverse outline (first sentence of every paragraph) is written for review (into --outline-dir)
+ 30. vocabulary register, both ways: obscure words where the field uses a plain one, and colloquial
+     words, contractions and ", so" clauses where a paper uses the written form
  31. symbols and hyphens: arrows and operators standing in for words (prose and tables),
      hyphen chains, prefix hyphens the field does not use, CamelCase coined names;
      in Chinese text, ASCII straight quotes and half-width , ; : between Chinese characters
  32. proofs and derivations: no paragraph-style proofs, no inline relation chains,
-     multi-line derivations carry step justifications or labels
+     multi-line derivations carry step justifications or labels; with --display-style cited,
+     a numbered display carries no closing punctuation, follows a sentence that cites its
+     number, and is followed by a new sentence
  33. scaffolding: enumeration labels, summary and roadmap paragraphs, parenthetical
      density, "Note that"-style openers (folded into item 15), lists in running text
 
@@ -350,6 +359,26 @@ OBSCURE = {
     "elegant": "(delete)", "noteworthy": "(delete)", "burgeoning": "growing", "ubiquitous": "common",
     "seminal": "early", "profound": "(delete)", "immense": "large", "vast": "large", "sheer": "(delete)",
 }
+# 30, the other end of the register: colloquial word or phrase -> the written form. Regular expressions over
+# lower-cased prose; a word the venue corpus uses twice is allowed anyway. Domain words that only sound
+# informal (crew, shop, people) are not listed: they are terms in scheduling and human-factors papers.
+COLLOQUIAL = {
+    r"a lot of|lots of|plenty of|tons of": "many / much",
+    r"a bit(?! (?:of information|string|vector|mask|flip|rate))": "slightly",          # a bit string is a term
+    r"a couple of": "two / a few", r"kinda|sorta": "(delete)", r"pretty much": "largely",
+    r"really": "(delete)", r"huge": "large", r"big(?:ger|gest)?(?!-m\b| data\b)": "large", r"tired": "fatigued",   # big-M, big data
+    r"get|gets|got|gotten|getting": "obtain / become", r"(?<!internet of )things?": "(name it)", r"stuff": "(name it)",
+    r"nowadays": "currently", r"anyway": "(delete)", r"okay": "acceptable", r"nice": "(name the property)",
+    r"tough": "difficult", r"cheap(?:er|est)?(?! talk)": "inexpensive / less costly", r"till": "until",
+    r"figure(?:s|d)? out|find(?:s)? out|found out": "determine",
+    r"come(?:s)? up with|came up with": "devise", r"look(?:s|ed)? (?:at|into)": "examine", r"make(?:s)? sure|made sure": "ensure / verify",
+    r"go(?:es)? up|went up": "increase", r"go(?:es)? down|went down": "decrease", r"end(?:s|ed)? up": "result in",
+    r"more and more": "increasingly", r"and so on": "(list the items)", r"on top of that": "in addition",
+    r"(?:about|around) (?=\d)": "approximately",
+}
+CONTRACTION = r"\b(?:\w+n't|(?:it|that|there|here|what|let)'s|\w+'(?:re|ve|ll))\b"     # don't, it's, we've: written out in a paper
+COLLOQUIAL_OPENERS = ("so,", "so ", "plus,", "plus ")                              # sentence-initial So / Plus
+ZH_COLLOQUIAL = ("好多", "一大堆", "搞清", "搞定", "弄清", "差不多", "没法", "说白了", "大白话")
 ZH_OBSCURE = ("赋能", "抓手", "底层逻辑", "闭环", "颗粒度", "擘画", "彰显", "凸显", "阐释", "诠释", "赋予",
               "不可或缺", "举足轻重", "行之有效", "有力支撑", "深度融合", "全方位", "多维度", "层层递进",
               "应运而生", "蔚然成风", "纵观", "剖析", "探究")
@@ -369,7 +398,9 @@ CAMEL_OK = {"PyTorch", "TensorFlow", "GitHub", "OpenAI", "DeepMind", "LaTeX", "B
             "ArXiv", "YouTube", "MinMax", "OpenMP", "MuJoCo", "GraphSAGE", "PageRank", "WordNet", "ImageNet",
             "HuggingFace", "LangChain", "NumPy", "SciPy", "TensorBoard", "GloVe", "MoCo", "AlphaFold", "AlphaGo",
             "AlphaZero", "HumanEval", "MobileNet", "EfficientNet", "DenseNet", "AlexNet", "SentencePiece",
-            "WordPiece", "ControlNet", "DreamBooth", "PointNet", "DeepWalk", "CodeLlama"}
+            "WordPiece", "ControlNet", "DreamBooth", "PointNet", "DeepWalk", "CodeLlama",
+            # hardware, office and simulation products named in experimental setups
+            "GeForce", "PowerPoint", "LibreOffice", "GitLab", "CatBoost", "AnyLogic", "FlexSim"}
 # 33: scaffolding openers
 SUMMARY_OPENERS = ("in summary", "to summarize", "to sum up", "in conclusion", "taken together",
                    "in this section, we have", "we have shown that", "overall, this section", "all in all")
@@ -425,8 +456,8 @@ ZH_SUMMARY_TAIL = r"^(这一|该|上述)(设计|机制|做法|策略)(保证|确
 TH_DEFAULT = dict(connectives=2, hedges=2, triplets=2, paragraph_leads=4, sent_cv_min=0.35,
                   intensifier_per_k=3.0, generic_verb_per_k=6.0, abstract_noun_per_k=8.0,
                   cluster=4, acronym_min_uses=10, self_acronyms=1,
-                  obscure=2, hyphen_per_k=25.0, paren_per_100=1.5, ie_eg=4, enum_groups=1,
-                  lists=1, proof_words=120, camel_names=1)
+                  obscure=2, colloquial=2, so_clause_per_k=3.0, hyphen_per_k=25.0, paren_per_100=1.5, ie_eg=4,
+                  enum_groups=1, lists=1, proof_words=120, camel_names=1)
 
 
 def load_thresholds(baseline, notes: list[str]) -> dict:
@@ -492,17 +523,22 @@ def plain_to_texish(text: str) -> str:
 
 
 def run_style_checks(sources, style_sources=None, zh: bool = False, baseline=None, root=None,
-                     abstract_text=None, method_name: str | None = None, genre: str = "paper"):
+                     abstract_text=None, method_name: str | None = None, genre: str = "paper",
+                     display_style: str = "sentence"):
     """Items 14-27 and 30-33 over `sources` (whole text: acronym budget, abstract) and `style_sources`
     (per-file items; defaults to `sources`). Returns (problems, notes). `root` is where the
-    reverse outline is written. `abstract_text` lets check.py pass the abstract it already parsed.
+    reverse outline is written (None: it is counted, not written). `abstract_text` lets check.py pass
+    the abstract it already parsed. `display_style` is sentence (a display is part of its sentence and
+    punctuated with it, the default) or cited (the house style of the manuscript skills: a numbered
+    display carries no closing punctuation, the sentence before it cites its number, and the text
+    after it starts a new sentence).
     `genre` is paper, rebuttal or letter: in a response letter or a cover letter the concessions,
     clarifications and courtesy phrases of item 17 are reported as notes, and scope statements are
     not checked (answering a reviewer about scope is what such a letter is for)."""
     ZH = zh
     SOURCES = [Path(s) for s in sources]
     STYLE_SOURCES = [Path(s) for s in style_sources] if style_sources is not None else SOURCES
-    ROOT = Path(root) if root is not None else (SOURCES[0].resolve().parent if SOURCES else Path("."))
+    ROOT = Path(root) if root is not None else None
     problems: list[str] = []
     notes: list[str] = []
     TH = load_thresholds(baseline, notes)
@@ -659,8 +695,11 @@ def run_style_checks(sources, style_sources=None, zh: bool = False, baseline=Non
                 elif not re.search(r"https?:|\d:\d", line):
                     problems.append(f"mid-sentence colon at {name}:{i}")
 
-        # 20: dashes used as parentheticals (number ranges such as 20--50 are fine)
-        for i, line in enumerate(prose.splitlines(), 1):
+        # 20: dashes used as parentheticals (number ranges such as 20--50 are fine, and so is a range of
+        # references: Eqs.~\eqref{a}--\eqref{b} would otherwise read as " -- " once the macros are stripped)
+        ref = r"\\(?:eq|auto|page|name|sub|c|C)?ref\*?\{[^}]*\}"
+        ranged = re.sub("(" + ref + r")([\s~]*--[\s~]*)(?=" + ref + ")", lambda m: m.group(1) + m.group(2).replace("--", "  "), raw)
+        for i, line in enumerate(prose_of(ranged).splitlines(), 1):
             if "style-exempt" in (raw_lines[i - 1] if i <= len(raw_lines) else ""):
                 continue
             if ZH and ("——" in line or "—" in line):
@@ -820,7 +859,10 @@ def run_style_checks(sources, style_sources=None, zh: bool = False, baseline=Non
             problems.append("abstract is broken into paragraphs -- a single paragraph, six sentences")
 
     # 27: reverse outline for the logic pass
-    if outline:
+    if outline and ROOT is None:
+        notes.append(f"reverse outline: {len(outline)} paragraphs, not written -- pass --outline-dir <folder> "
+                     f"to get reverse-outline.md (keep it out of the manuscript folder)")
+    elif outline:
         ROOT.mkdir(parents=True, exist_ok=True)
         out = (ROOT / ("reverse-outline-zh.md" if ZH else "reverse-outline.md"))
         out.write_text("# Reverse outline (first sentence of every paragraph)\n\n" + "\n".join(outline) + "\n",
@@ -860,6 +902,26 @@ def run_style_checks(sources, style_sources=None, zh: bool = False, baseline=Non
                             f"{sorted(set(hits))[:6]}")
         elif hits:
             notes.append(f"{name}: obscure word(s) {sorted(set(hits))} -- prefer the field's usual word")
+        loose: list[str] = []                                       # the other end: colloquial words and contractions
+        if ZH:
+            loose = [w for w in ZH_COLLOQUIAL for _ in range(prose.count(w))]
+        else:
+            for pat, better in COLLOQUIAL.items():
+                for m in re.finditer(r"(?<![A-Za-z-])(?:%s)(?![A-Za-z])" % pat, low):
+                    word = m.group(0).strip()
+                    if word not in TH["_vocab"]:
+                        loose.append(f"{word} -> {better}")
+            loose += [f"{m.group(0)} -> write it out" for m in re.finditer(CONTRACTION, low)]
+            loose += [f"{s.split()[0]} (sentence-initial) -> therefore / in addition" for s in sentences
+                      if s.lower().startswith(COLLOQUIAL_OPENERS) and not s.lower().startswith("so far")]
+            n_so = len(re.findall(r", so (?!that\b|far\b|as\b|called\b)", low))
+            if n_so >= 5 and per_k(n_so, n_words) > TH["so_clause_per_k"]:
+                notes.append(f"{name}: {n_so} clauses joined by ', so' ({per_k(n_so, n_words):.1f} per 1000 words, limit "
+                             f"{TH['so_clause_per_k']}) -- write 'and therefore' or 'hence', or split the sentence")
+        if len(loose) > TH["colloquial"]:
+            problems.append(f"{name}: {len(loose)} colloquial words where a paper uses the written form: {sorted(set(loose))[:6]}")
+        elif loose:
+            notes.append(f"{name}: colloquial word(s) {sorted(set(loose))} -- use the written form")
 
         # 31: symbols and hyphens -----------------------------------------------
         keep_nl = lambda m: "\n" * m.group(0).count("\n")                          # line numbers must match the source
@@ -938,6 +1000,32 @@ def run_style_checks(sources, style_sources=None, zh: bool = False, baseline=Non
             if blk.count("\\\\") >= 2 and not re.search(r"\\label|\\text\{|&&|\\tag", blk):
                 notes.append(f"{name}:{stripped[: m.start()].count(chr(10)) + 1} {blk.count(chr(92) * 2) + 1}-line derivation with no step justification or label -- add \\text{{(by ...)}} or a label per step")
 
+        if display_style == "cited":                              # numbered displays, house style of the manuscript skills
+            numbered = r"\\begin\{(equation|align|alignat|flalign|gather|multline|eqnarray)\}(.*?)\\end\{\1\}"
+            cite = r"\\(?:eq|auto|c|C)?ref\*?\{([^}]*)\}"
+            for m in re.finditer(numbered, stripped, re.S):
+                line = stripped[: m.start()].count("\n") + 1
+                if "style-exempt" in (raw.splitlines() + [""] * line)[line - 1]:      # the \begin line carries the exemption
+                    continue
+                blk = re.sub(r"\\begin\{(cases|aligned|split|array|[pbvBV]?matrix)\}.*?\\end\{\1\}", "X", m.group(2), flags=re.S)
+                labels = set(re.findall(r"\\label\{([^}]*)\}", blk))
+                rows = [re.sub(r"\\(?:label\{[^}]*\}|nonumber\b|notag\b)|\s", "", r) for r in re.split(r"\\\\", blk)]
+                bad = next((r[-1] for r in rows if r and r[-1] in ",.;"), None)
+                if bad:
+                    problems.append(f"{name}:{line} numbered display ends a row with '{bad}' -- no punctuation after a numbered "
+                                    f"equation (the sentence before it ends with its number)")
+                before = stripped[: m.start()].rstrip()
+                para = before[before.rfind("\n\n") + 1:] if "\n\n" in before else before
+                lead = re.split(r"(?<=[.!?])\s+", para.strip())[-1] if para.strip() else ""
+                cited = {k.strip() for g in re.findall(cite, lead) for k in g.split(",")}
+                if labels and (not before.endswith(".") or not (cited & labels)):
+                    problems.append(f"{name}:{line} numbered display is not introduced by a complete sentence that cites it -- "
+                                    f"end the sentence before it with the number, e.g. 'is given by Eq.~\\eqref{{{sorted(labels)[0]}}}.'")
+                after = re.match(r"[ \t]*\n?[ \t]*(?:\\noindent\s*)?([a-z]+)", stripped[m.end():])
+                if after:
+                    problems.append(f"{name}:{line} the text after a numbered display continues its sentence ('{after.group(1)} ...') -- "
+                                    f"start a new sentence, e.g. 'In Eq.~\\eqref{{...}}, ...'")
+
         # 33: scaffolding ---------------------------------------------------------
         groups = 0
         if ZH:
@@ -978,6 +1066,9 @@ def run_style_checks(sources, style_sources=None, zh: bool = False, baseline=Non
     if len(camel_seen) > TH["camel_names"]:
         problems.append(f"CamelCase coined names {sorted(camel_seen)} -- only the method's own name may be one "
                         f"(pass --method-name); the rest are ordinary terms in lower case")
+    elif camel_seen and method_name:
+        notes.append(f"CamelCase name {sorted(camel_seen)} besides the method's name {method_name!r}: fine for a product or "
+                     f"a data set, lower case for a mechanism of the paper")
     elif camel_seen:
         notes.append(f"CamelCase name {sorted(camel_seen)} taken as the method's name; pass --method-name to confirm")
 
@@ -995,15 +1086,20 @@ if __name__ == "__main__":
     ap.add_argument("files", nargs="+", type=Path, help=".tex / .md / .txt files; sections are checked one by one")
     ap.add_argument("--zh", action="store_true", help="Chinese text (default: auto-detect)")
     ap.add_argument("--baseline", type=Path, default=Path(__file__).resolve().parent / "style_baseline.json")
-    ap.add_argument("--outline-dir", type=Path, default=None, help="where reverse-outline.md goes (default: first file's folder)")
+    ap.add_argument("--outline-dir", type=Path, default=None,
+                    help="write reverse-outline.md into this folder (default: the outline is counted, not written)")
     ap.add_argument("--method-name", default=None, help="the one CamelCase name allowed (the method's own name)")
     ap.add_argument("--genre", choices=("paper", "rebuttal", "letter"), default="paper",
                     help="rebuttal / letter: concessions and courtesy phrases are notes, scope statements are not checked")
+    ap.add_argument("--display-style", choices=("sentence", "cited"), default="sentence",
+                    help="cited: a numbered display carries no closing punctuation, follows a sentence that cites its "
+                         "number and is followed by a new sentence (item 32); sentence: displays are punctuated as part "
+                         "of their sentence (default)")
     a = ap.parse_args()
     zh = a.zh or looks_chinese(a.files)
     problems, notes = run_style_checks(a.files, zh=zh, baseline=a.baseline,
-                                       root=a.outline_dir or a.files[0].resolve().parent, method_name=a.method_name,
-                                       genre=a.genre)
+                                       root=a.outline_dir, method_name=a.method_name,
+                                       genre=a.genre, display_style=a.display_style)
     print(f"files   : {len(a.files)}" + (" (zh)" if zh else "") + ("" if a.genre == "paper" else f" ({a.genre})"))
     for n in notes:
         print(f"  note   {n}")

@@ -25,7 +25,7 @@
 SKILLs-Paper-Polish/
 ├── README.md
 ├── CLAUDE.md                             # 在本仓库开会话时的说明：技能在哪里、维护纪律
-├── tests/                                # 检查脚本的自测：run_fixtures.py + 十个埋错 / 干净样例（不随技能安装）
+├── tests/                                # 检查脚本的自测：run_fixtures.py + 十二个埋错 / 干净样例（不随技能安装）
 └── paper-polish/
     ├── SKILL.md                          # 决策层：模式、不变量、体裁规则、流程、自检
     └── references/
