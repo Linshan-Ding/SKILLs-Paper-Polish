@@ -112,6 +112,20 @@ EXPECT = {
         r"FAIL   en-rebuttal\.md:9 scope caveat 'beyond the scope of this paper'",
         r"FAIL   en-rebuttal\.md:16 apology or excuse 'we apologize'",
     ], [r"en-rebuttal\.md:5\b", r"\d+ hedges"]),                             # the quoted reviewer comment is not prose
+    # item 30, colloquial register: five hits against a budget of two; the reference range is no dash, GeForce no coined name
+    "en-register.tex": (1, [
+        r"FAIL   en-register\.tex: 5 colloquial words where a paper uses the written form",
+        r"'a lot of -> many / much'", r"\"can't -> write it out\"",
+    ], [r"dash in prose", r"CamelCase"]),
+    "en-register.tex --method-name RouteNet": (1, [r"FAIL   en-register\.tex: 5 colloquial words"], [r"dash in prose", r"CamelCase"]),
+    # item 32, numbered displays in the cited style: the second display breaks all three rules, the first none,
+    # and the unnumbered align* may stay inside its sentence
+    "en-display.tex --display-style cited": (3, [
+        r"FAIL   en-display\.tex:9 numbered display ends a row with ','",
+        r"FAIL   en-display\.tex:9 numbered display is not introduced by a complete sentence that cites it",
+        r"FAIL   en-display\.tex:9 the text after a numbered display continues its sentence \('where \.\.\.'\)",
+    ], [r"en-display\.tex:(?:5|15)\b"]),
+    "en-display.tex": (0, [], [r"FAIL"]),                                    # the default style punctuates displays with their sentence
     "en-rebuttal.md --genre rebuttal": (2, [
         r"FAIL   en-rebuttal\.md:17 stacked hedge",
         r"FAIL   en-rebuttal\.md:17 vague qualifier 'in some cases'",

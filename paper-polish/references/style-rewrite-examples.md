@@ -187,6 +187,22 @@ efficient 这类效果词，正文里当普通名词小写使用。审稿人看�
 
 要点：每个生僻词都换成领域论文里的平实词；"a plethora of hyperparameters"这种空指的量换成数字与出处。
 
+**同一项的另一头：口语词 → 书面形式**
+
+**改前**
+
+> Changeover work makes workers tired, so the stages of different stations compete for the same people. We get a
+> lot of schedules from the search, but it can't finish a generation on the big instances in about 600 s.
+
+**改后**
+
+> Changeover work induces physical fatigue, and the reconfiguration stages of different stations therefore
+> compete for a small pool of qualified workers. The search generates 1,200 schedules per request but completes
+> no generation on the largest instances within approximately 600 s.
+
+要点：tired、get、a lot of、big、can't、about 逐个换成书面形式；", so" 改成 and therefore；换词不改事实，空指的
+"a lot of" 仍然换成数字。把生僻词改平实是往下调语域，这一步是防止调过头。
+
 ## 对照十：符号与连字符 → 词语与领域拼法
 
 **改前**
@@ -225,6 +241,31 @@ unchanged and $g$ is unbiased.
 ```
 
 要点：内容一字未改，等式链拆成每行一步并标依据；"which completes the proof"由 `\end{proof}` 代替。
+
+**带编号公式：句内式 → 引用式**（稿件体例选引用式时，`--display-style cited`）
+
+**改前**
+
+```latex
+The reward is
+\begin{equation}\label{eq:reward}
+r_k = (P_{k+1} - P_k) + (Q_k - Q_{k+1}) - \beta I_k,
+\end{equation}
+where $I_k = 1$ marks the transition into failure and $\beta = 2$.
+```
+
+**改后**
+
+```latex
+The reward of decision $k$ is defined in Eq.~\eqref{eq:reward}.
+\begin{equation}\label{eq:reward}
+r_k = (P_{k+1} - P_k) + (Q_k - Q_{k+1}) - \beta I_k
+\end{equation}
+The indicator $I_k$ equals one for the transition into failure and zero otherwise, and the penalty weight is
+$\beta = 2$.
+```
+
+要点：公式前的句子完整并以编号结束；公式末尾的逗号删掉；公式后的 where 从句改成独立的句子。
 
 ## 对照十二：枚举与总结脚手架 → 叙述顺序
 
